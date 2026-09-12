@@ -1,0 +1,64 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: wassal-user-management
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:wassal_db}
+    username: ${DB_USER:wassal_user}
+    password: ${DB_PASSWORD:wassal_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:zaidaneayman738@gmail.com}
+    password: ${MAIL_PASSWORD:qsge uvbo olje ykiy}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+wassal:
+  seed-mock-data: ${SEED_MOCK_DATA:true}
+  jwt:
+    # 256-bit secret key in base64 / hex format
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    access-token-expiration-ms: 900000 # 15 min
+    refresh-token-expiration-seconds: 604800 # 7 days
+    cookie-same-site: Strict
+    cookie-secure: false
+  mail:
+    from: ${MAIL_FROM:zaidaneayman738@gmail.com}
+    login-url: ${LOGIN_URL:http://localhost:3000/login}
+    mock-mode: ${MAIL_MOCK_MODE:false}
+  contact:
+    default-name: Wassal Administration
+    default-email: contact@wassal.org
+    default-phone: "+212500000000"
+  cors:
+    allowed-origins:
+      - "http://localhost:3000"
+      - "http://localhost:5173"
+  rate-limit:
+    auth-requests-per-minute: 10
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
