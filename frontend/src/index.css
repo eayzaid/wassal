@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand */
+  --wassal-green: #53DD6C;
+  --wassal-green-ink: #1B872E;
+  --wassal-sage: #63A088;
+  --wassal-sage-deep: #4B7B68;
+  --wassal-slate: #56638A;
+  --wassal-plum: #483A58;
+  --wassal-wine: #56203D;
+
+  /* Neutrals */
+  --wassal-ink: #1A1A1A;
+  --wassal-bg: #FAFAF9;
+  --wassal-surface: #FFFFFF;
+  --wassal-border: #E4E2E8;
+
+  /* Type */
+  --font-heading: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--wassal-bg);
+  color: var(--wassal-ink);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f0f4;
+}
+::-webkit-scrollbar-thumb {
+  background: #c5c2cf;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #56638A;
+}
