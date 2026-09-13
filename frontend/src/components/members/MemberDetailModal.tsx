@@ -183,7 +183,7 @@ export const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
                       ? 'Compte actif et vérifié'
                       : member.accountStatus === 'PENDING_APPROVAL'
                       ? 'En attente de revue administrative'
-                      : 'Inscription refusée'}
+                      : 'Demande refusée (Réintégration possible)'}
                   </p>
                 </CardContent>
               </Card>
@@ -233,7 +233,7 @@ export const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
                           setConfirmAction({
                             isOpen: true,
                             title: "Rejeter l'inscription",
-                            message: `Êtes-vous sûr de vouloir refuser l'adhésion de ${member.firstName} ${member.lastName} ? Cette action clôture définitivement sa demande.`,
+                            message: `Êtes-vous sûr de vouloir refuser l'adhésion de ${member.firstName} ${member.lastName} ? Un email avec les coordonnées de contact lui sera envoyé. Le membre pourra être réintégré ultérieurement si nécessaire.`,
                             isDestructive: true,
                             action: () => onReject(member.id),
                           })

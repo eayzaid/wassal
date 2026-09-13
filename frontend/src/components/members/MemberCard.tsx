@@ -6,16 +6,18 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { formatDate } from '../../utils/formatters';
-import { Mail, Phone, Calendar, ChevronRight } from 'lucide-react';
+import { Mail, Phone, Calendar, ChevronRight, Check } from 'lucide-react';
 
 interface MemberCardProps {
   member: UserSummaryDto;
   onViewDetails: (member: UserSummaryDto) => void;
+  onApprove?: (id: number) => void;
 }
 
 export const MemberCard: React.FC<MemberCardProps> = ({
   member,
   onViewDetails,
+  onApprove,
 }) => {
   const initials = `${member.firstName?.[0] || ''}${member.lastName?.[0] || ''}`;
 
@@ -85,22 +87,39 @@ export const MemberCard: React.FC<MemberCardProps> = ({
         </div>
 
         {/* Action Button: 44px min touch target */}
-        <div className="pt-2 border-t border-wassal-border/60 flex items-center justify-between">
+        <div className="pt-2 border-t border-wassal-border/60 flex items-center justify-between gap-2">
           <span className="text-[11px] text-wassal-slate font-medium">
             Identifiant #{member.id}
           </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewDetails(member);
-            }}
-            className="h-9 px-3 text-xs font-semibold text-wassal-plum hover:text-wassal-green-ink gap-1"
-          >
-            <span>Fiche & Actions</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Button>
+          <div className="flex items-center gap-1.5">
+            {member.accountStatus === 'REJECTED' && onApprove && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onApprove(member.id);
+                }}
+                className="h-9 px-2.5 text-xs font-semibold text-wassal-green-ink border-wassal-green/40 hover:bg-wassal-green/10 gap-1"
+                title="Accepter / Réintégrer le membre"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Réintégrer</span>
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails(member);
+              }}
+              className="h-9 px-3 text-xs font-semibold text-wassal-plum hover:text-wassal-green-ink gap-1"
+            >
+              <span>Fiche & Actions</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -22,6 +22,7 @@ import {
   Clock,
   Ban,
   Users,
+  XCircle,
 } from 'lucide-react';
 
 interface MemberFiltersProps {
@@ -32,6 +33,7 @@ interface MemberFiltersProps {
     total: number;
     approved: number;
     pending: number;
+    rejected?: number;
     blocked: number;
   };
 }
@@ -111,7 +113,7 @@ export const MemberFilters: React.FC<MemberFiltersProps> = ({
     filters.blocked !== '';
 
   // Quick preset pills handler
-  const handleQuickPreset = (preset: 'ALL' | 'APPROVED' | 'PENDING' | 'BLOCKED') => {
+  const handleQuickPreset = (preset: 'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED' | 'BLOCKED') => {
     switch (preset) {
       case 'ALL':
         onChange({ ...filters, status: '', blocked: '', page: 0 });
@@ -122,13 +124,16 @@ export const MemberFilters: React.FC<MemberFiltersProps> = ({
       case 'PENDING':
         onChange({ ...filters, status: 'PENDING_APPROVAL', blocked: '', page: 0 });
         break;
+      case 'REJECTED':
+        onChange({ ...filters, status: 'REJECTED', blocked: '', page: 0 });
+        break;
       case 'BLOCKED':
         onChange({ ...filters, blocked: true, status: '', page: 0 });
         break;
     }
   };
 
-  const isPresetActive = (preset: 'ALL' | 'APPROVED' | 'PENDING' | 'BLOCKED') => {
+  const isPresetActive = (preset: 'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED' | 'BLOCKED') => {
     if (preset === 'ALL') {
       return !filters.status && filters.blocked === '';
     }
@@ -137,6 +142,9 @@ export const MemberFilters: React.FC<MemberFiltersProps> = ({
     }
     if (preset === 'PENDING') {
       return filters.status === 'PENDING_APPROVAL';
+    }
+    if (preset === 'REJECTED') {
+      return filters.status === 'REJECTED';
     }
     if (preset === 'BLOCKED') {
       return filters.blocked === true;
@@ -239,6 +247,22 @@ export const MemberFilters: React.FC<MemberFiltersProps> = ({
             <Clock className="w-3 h-3 text-amber-500" />
             <span>En attente</span>
             {counts && <span className="opacity-80 font-mono text-[11px]">({counts.pending})</span>}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleQuickPreset('REJECTED')}
+            className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              isPresetActive('REJECTED')
+                ? 'bg-wassal-plum text-white border-wassal-plum shadow-xs'
+                : 'bg-wassal-surface text-wassal-slate border-wassal-border hover:bg-gray-50'
+            }`}
+          >
+            <XCircle className="w-3 h-3 text-wassal-plum" />
+            <span>Refusés</span>
+            {counts && counts.rejected !== undefined && (
+              <span className="opacity-80 font-mono text-[11px]">({counts.rejected})</span>
+            )}
           </button>
 
           <button

@@ -82,7 +82,7 @@ export const PendingApprovalsPage: React.FC = () => {
     setConfirmDialog({
       isOpen: true,
       title: "Refuser l'adhésion",
-      message: `Refuser la demande de ${user.firstName} ${user.lastName} ? Cette action est irréversible et clôture la demande.`,
+      message: `Refuser la demande de ${user.firstName} ${user.lastName} ? Un email de notification avec les coordonnées de contact lui sera envoyé. Le membre pourra être réintégré ultérieurement depuis l'annuaire si besoin.`,
       isDestructive: true,
       action: async () => {
         try {

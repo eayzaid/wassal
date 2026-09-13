@@ -23,6 +23,7 @@ import {
   UserCheck,
   Clock,
   Ban,
+  XCircle,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
@@ -59,6 +60,7 @@ export const MemberDirectoryPage: React.FC = () => {
     total: 0,
     approved: 0,
     pending: 0,
+    rejected: 0,
     blocked: 0,
   });
 
@@ -82,16 +84,18 @@ export const MemberDirectoryPage: React.FC = () => {
   // Fetch count summaries
   const fetchCounts = useCallback(async () => {
     try {
-      const [allRes, pendingRes, approvedRes, blockedRes] = await Promise.all([
+      const [allRes, pendingRes, approvedRes, rejectedRes, blockedRes] = await Promise.all([
         usersApi.listUsers({ size: 1 }),
         usersApi.listUsers({ status: 'PENDING_APPROVAL', size: 1 }),
         usersApi.listUsers({ status: 'APPROVED', blocked: false, size: 1 }),
+        usersApi.listUsers({ status: 'REJECTED', size: 1 }),
         usersApi.listUsers({ blocked: true, size: 1 }),
       ]);
       setCounts({
         total: allRes.page?.totalElements ?? allRes.totalElements ?? 0,
         pending: pendingRes.page?.totalElements ?? pendingRes.totalElements ?? 0,
         approved: approvedRes.page?.totalElements ?? approvedRes.totalElements ?? 0,
+        rejected: rejectedRes.page?.totalElements ?? rejectedRes.totalElements ?? 0,
         blocked: blockedRes.page?.totalElements ?? blockedRes.totalElements ?? 0,
       });
     } catch {
@@ -206,8 +210,8 @@ export const MemberDirectoryPage: React.FC = () => {
         }
       />
 
-      {/* KPI Cards: Responsive 2-col on Mobile, 4-col on Desktop */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+      {/* KPI Cards: Responsive 2-col on Mobile, 3-col on Tablet, 5-col on Desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
         <Card className="shadow-xs border-wassal-border">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between text-wassal-slate">
@@ -235,6 +239,16 @@ export const MemberDirectoryPage: React.FC = () => {
               <Clock className="w-4 h-4 text-amber-500 shrink-0" />
             </div>
             <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-wassal-plum">{counts.pending}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-xs border-wassal-border">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center justify-between text-wassal-plum">
+              <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Refusés</span>
+              <XCircle className="w-4 h-4 text-wassal-plum shrink-0" />
+            </div>
+            <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-wassal-plum">{counts.rejected}</p>
           </CardContent>
         </Card>
 
@@ -289,6 +303,7 @@ export const MemberDirectoryPage: React.FC = () => {
               key={member.id}
               member={member}
               onViewDetails={handleOpenDetails}
+              onApprove={handleApprove}
             />
           ))
         )}
