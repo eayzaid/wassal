@@ -91,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
           <div className="mt-2.5">
-            <RoleBadge role={user?.role} size="sm" />
+            <RoleBadge role={user?.role} size="sm" onDark />
           </div>
         </div>
 
