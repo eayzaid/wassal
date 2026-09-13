@@ -43,7 +43,7 @@ public class AdminUserController {
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) Boolean blocked,
             @RequestParam(required = false) String q,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<UserSummaryDto> page = userManagementService.listUsers(status, role, blocked, q, pageable);
         return ResponseEntity.ok(page);

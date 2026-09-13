@@ -47,7 +47,7 @@ export const MemberDirectoryPage: React.FC = () => {
     blocked: '',
     q: '',
     page: 0,
-    size: 20,
+    size: 10,
     sort: 'createdAt,desc',
   });
 
@@ -315,7 +315,7 @@ export const MemberDirectoryPage: React.FC = () => {
             blocked: '',
             q: '',
             page: 0,
-            size: 20,
+            size: 10,
             sort: 'createdAt,desc',
           })
         }
