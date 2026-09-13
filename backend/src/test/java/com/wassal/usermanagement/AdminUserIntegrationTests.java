@@ -167,17 +167,47 @@ class AdminUserIntegrationTests {
     }
 
     @Test
-    @DisplayName("FR-2 & BR-10: Reject user sets REJECTED status; cannot re-approve/re-reject")
-    void testRejectUserTerminal() throws Exception {
+    @DisplayName("Admin can reject pending user, accept rejected user again, but cannot reject an accepted user (can only block)")
+    void testRejectedUserCanBeApprovedAndOnlyBlocked() throws Exception {
+        // 1. Reject pending user -> status becomes REJECTED
         mockMvc.perform(patch("/api/admin/users/" + pendingUser.getId() + "/reject")
                         .header("Authorization", presidentToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accountStatus", is("REJECTED")));
 
-        User updated = userRepository.findById(pendingUser.getId()).orElseThrow();
-        assertThat(updated.getAccountStatus()).isEqualTo(AccountStatus.REJECTED);
+        User rejectedUser = userRepository.findById(pendingUser.getId()).orElseThrow();
+        assertThat(rejectedUser.getAccountStatus()).isEqualTo(AccountStatus.REJECTED);
 
-        // Attempt to approve a rejected user -> fails (BR-10)
+        // 2. Cannot reject already rejected user
+        mockMvc.perform(patch("/api/admin/users/" + pendingUser.getId() + "/reject")
+                        .header("Authorization", presidentToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("INVALID_OPERATION")));
+
+        // 3. Rejected user CAN be approved again -> status becomes APPROVED
+        mockMvc.perform(patch("/api/admin/users/" + pendingUser.getId() + "/approve")
+                        .header("Authorization", presidentToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountStatus", is("APPROVED")));
+
+        User approvedUser = userRepository.findById(pendingUser.getId()).orElseThrow();
+        assertThat(approvedUser.getAccountStatus()).isEqualTo(AccountStatus.APPROVED);
+
+        // 4. Once accepted/approved, user CANNOT be rejected again
+        mockMvc.perform(patch("/api/admin/users/" + pendingUser.getId() + "/reject")
+                        .header("Authorization", presidentToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("INVALID_OPERATION")));
+
+        // 5. Once accepted/approved, user can only get blocked
+        mockMvc.perform(patch("/api/admin/users/" + pendingUser.getId() + "/block")
+                        .header("Authorization", presidentToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.blocked", is(true)));
+
+        assertThat(userRepository.findById(pendingUser.getId()).orElseThrow().isBlocked()).isTrue();
+
+        // 6. Attempting to approve an already approved user fails
         mockMvc.perform(patch("/api/admin/users/" + pendingUser.getId() + "/approve")
                         .header("Authorization", presidentToken))
                 .andExpect(status().isBadRequest())

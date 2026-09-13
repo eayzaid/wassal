@@ -78,9 +78,9 @@ public class UserManagementService {
         // BR-8: No user may approve themself
         validateNotSelf(actor, target, "approve");
 
-        // BR-10: Target must be PENDING_APPROVAL
-        if (target.getAccountStatus() != AccountStatus.PENDING_APPROVAL) {
-            throw new InvalidOperationException("Only accounts with PENDING_APPROVAL status can be approved.");
+        // Allow PENDING_APPROVAL or previously REJECTED accounts to be approved
+        if (target.getAccountStatus() != AccountStatus.PENDING_APPROVAL && target.getAccountStatus() != AccountStatus.REJECTED) {
+            throw new InvalidOperationException("Only accounts with PENDING_APPROVAL or REJECTED status can be approved.");
         }
 
         target.setAccountStatus(AccountStatus.APPROVED);

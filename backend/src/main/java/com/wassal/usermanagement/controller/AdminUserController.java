@@ -57,7 +57,7 @@ public class AdminUserController {
     }
 
     @PatchMapping("/{id}/approve")
-    @Operation(summary = "Approve a pending user registration")
+    @Operation(summary = "Approve a pending registration or accept a previously rejected user")
     public ResponseEntity<UserSummaryDto> approveUser(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal actor
@@ -67,7 +67,7 @@ public class AdminUserController {
     }
 
     @PatchMapping("/{id}/reject")
-    @Operation(summary = "Reject a pending user registration")
+    @Operation(summary = "Reject a pending user registration (only applicable to PENDING_APPROVAL; accepted users can only be blocked)")
     public ResponseEntity<UserSummaryDto> rejectUser(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal actor

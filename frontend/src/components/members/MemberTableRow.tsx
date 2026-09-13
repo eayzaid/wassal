@@ -103,6 +103,21 @@ export const MemberTableRow: React.FC<MemberTableRowProps> = ({
             </>
           )}
 
+          {member.accountStatus === 'REJECTED' && onApprove && !isCurrentActor && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-wassal-green-ink hover:bg-emerald-50 hover:text-wassal-green-ink"
+              title="Accepter / Réintégrer le membre"
+              onClick={(e) => {
+                e.stopPropagation();
+                onApprove(member.id);
+              }}
+            >
+              <Check className="w-4 h-4" />
+            </Button>
+          )}
+
           <Button
             variant="ghost"
             size="sm"

@@ -156,7 +156,7 @@ sequenceDiagram
 | **BR-7** | Admin Directory | Only accessible to `PRESIDENT`, `VICE_PRESIDENT`, `RH` (`ROLE_ADMIN`). Hide Admin nav link for Members/Team Leaders. |
 | **BR-8** | No Self-Actions | An admin cannot approve, reject, block, unblock, or change role on **themself**. Disable action buttons for the current user's own row. |
 | **BR-9** | Top Tier Protection | If target user is `PRESIDENT` or `VICE_PRESIDENT`, **only an actor with role `PRESIDENT`** can block, unblock, or change role. Hide/disable actions if current user is not `PRESIDENT`. |
-| **BR-10** | Terminal Rejection | Once `REJECTED`, users cannot be approved or rejected again. Disable "Approve" button if status is `REJECTED`. |
+| **BR-10** | Reopening Rejected Users & Status Invariance | A `REJECTED` user can be accepted/approved again via `/api/admin/users/{id}/approve`. However, **once accepted/approved (`APPROVED`), a user cannot be rejected again**; governance on active members is restricted to blocking (`/block`), unblocking (`/unblock`), or role change. |
 | **BR-11** | Self-Service Scope | User can only update `firstName`, `lastName`, and `phoneNumber`. `email`, `role`, and `status` are read-only. |
 | **BR-12** | Password Reset Limit | 6-digit code expires in 10 minutes and is invalidated after 5 failed attempts. |
 | **BR-13** | RH Assignment Limit | `RH` **cannot** assign `PRESIDENT`, `VICE_PRESIDENT`, or `RH` roles. Filter out these options from role dropdown if actor is `RH`. |
@@ -290,13 +290,14 @@ Paginated search & filtering directory.
 - **Success Response:** `200 OK` with `UserSummaryDto`.
 
 #### `PATCH /api/admin/users/{id}/approve`
-- **Precondition:** User status must be `PENDING_APPROVAL`. Target cannot be actor (BR-8).
-- Dispatches approval email with login link.
+- **Precondition:** User status must be `PENDING_APPROVAL` or `REJECTED`. Target cannot be actor (BR-8).
+- Accepts / approves the user (sets status $\rightarrow$ `APPROVED`) and dispatches confirmation email with login link.
 - **Success Response:** `200 OK` with updated `UserSummaryDto`.
 
 #### `PATCH /api/admin/users/{id}/reject`
 - **Precondition:** User status must be `PENDING_APPROVAL`. Target cannot be actor (BR-8).
-- Sets terminal status `REJECTED` and dispatches email with admin contact info.
+- Sets status `REJECTED` and dispatches email with admin contact info.
+- **Constraint:** Once a user is accepted/approved (`APPROVED`), they **cannot** be rejected again (returns 400 `INVALID_OPERATION`). To restrict an active member, use the `/block` endpoint instead.
 - **Success Response:** `200 OK` with updated `UserSummaryDto`.
 
 #### `PATCH /api/admin/users/{id}/role`

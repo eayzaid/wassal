@@ -69,6 +69,7 @@ export const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
 
   const managementCheck = canManageTarget(actor, member);
   const isPending = member.accountStatus === 'PENDING_APPROVAL';
+  const isRejected = member.accountStatus === 'REJECTED';
 
   const handleExecuteConfirm = async () => {
     if (!confirmAction) return;
@@ -242,6 +243,26 @@ export const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
                         <span>Rejeter l'adhésion</span>
                       </Button>
                     </>
+                  )}
+
+                  {/* Re-accept button if rejected */}
+                  {isRejected && (
+                    <Button
+                      size="default"
+                      className="h-11 sm:h-9 w-full sm:w-auto gap-1.5"
+                      onClick={() =>
+                        setConfirmAction({
+                          isOpen: true,
+                          title: "Réintégrer le membre",
+                          message: `Êtes-vous sûr de vouloir réintégrer et approuver l'adhésion de ${member.firstName} ${member.lastName} ? Un email de confirmation sera transmis.`,
+                          isDestructive: false,
+                          action: () => onApprove(member.id),
+                        })
+                      }
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Réintégrer / Accepter</span>
+                    </Button>
                   )}
 
                   {/* Change Role Button */}
