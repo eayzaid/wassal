@@ -5,6 +5,7 @@ import { useToast } from '../../hooks/useToast';
 import { Button } from '../ui/button';
 import { Input } from '../common/Input';
 import { Label } from '../ui/label';
+import { DatePicker } from '../ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -127,18 +128,14 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-wassal-plum">Date et heure prévues de fin</Label>
-            <div className="relative">
-              <input
-                type="datetime-local"
-                required
-                value={expectedEndTime}
-                onChange={(e) => setExpectedEndTime(e.target.value)}
-                className="w-full h-11 px-3 text-xs rounded-xl border border-wassal-border bg-wassal-surface text-wassal-ink focus:outline-none focus:ring-2 focus:ring-wassal-green/40 focus:border-wassal-green-ink transition"
-              />
-            </div>
-          </div>
+          <DatePicker
+            label="Date et heure prévues d'achèvement *"
+            value={expectedEndTime}
+            onChange={(val) => setExpectedEndTime(val)}
+            placeholder="Sélectionner l'échéance du projet..."
+            includeTime
+            minDate={new Date()}
+          />
 
           <DialogFooter className="pt-2">
             <Button

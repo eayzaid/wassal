@@ -130,19 +130,38 @@ export const ProjectDetailPage: React.FC = () => {
 
   const handleTaskCreated = (newTask: TaskFullDto) => {
     setTasks((prev) => [newTask, ...prev]);
+    setProject((prev) =>
+      prev
+        ? {
+            ...prev,
+            tasks: [newTask as any, ...(prev.tasks || [])],
+          }
+        : prev
+    );
     toast.success('Tâche ajoutée au projet avec succès !');
     setIsCreateTaskOpen(false);
   };
 
   const handleTaskUpdated = (updatedTask: TaskDto) => {
     setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+    setProject((prev) =>
+      prev
+        ? {
+            ...prev,
+            tasks: (prev.tasks || []).map((t) =>
+              t.id === updatedTask.id ? (updatedTask as any) : t
+            ),
+          }
+        : prev
+    );
   };
 
   const handleRequestJoinTask = async (task: TaskDto) => {
     try {
       await tasksApi.requestAffiliation(task.id);
       toast.success('Demande de participation envoyée');
-      fetchProjectDetails();
+      const updated = await tasksApi.getTaskById(task.id);
+      handleTaskUpdated(updated);
     } catch (err: any) {
       toast.error(
         err.response?.data?.message || 'Erreur lors de la demande de participation.'
@@ -160,7 +179,7 @@ export const ProjectDetailPage: React.FC = () => {
         try {
           const updated = await tasksApi.requestDone(task.id);
           toast.success('Tâche déclarée achevée avec succès');
-          setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+          handleTaskUpdated(updated);
         } catch (err: any) {
           toast.error(
             err.response?.data?.message || 'Erreur lors de la déclaration.'
@@ -176,7 +195,7 @@ export const ProjectDetailPage: React.FC = () => {
     try {
       const updated = await tasksApi.confirmDone(task.id);
       toast.success(`Tâche "${task.name}" validée et terminée`);
-      setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+      handleTaskUpdated(updated);
     } catch (err: any) {
       toast.error(
         err.response?.data?.message || 'Erreur lors de la validation de la tâche.'
@@ -188,7 +207,7 @@ export const ProjectDetailPage: React.FC = () => {
     try {
       const updated = await tasksApi.rejectDone(task.id);
       toast.info(`La déclaration d'achèvement a été rejetée.`);
-      setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+      handleTaskUpdated(updated);
     } catch (err: any) {
       toast.error(
         err.response?.data?.message || 'Erreur lors du rejet de la tâche.'
@@ -207,6 +226,14 @@ export const ProjectDetailPage: React.FC = () => {
           await tasksApi.deleteTask(task.id);
           toast.success('Tâche supprimée');
           setTasks((prev) => prev.filter((t) => t.id !== task.id));
+          setProject((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  tasks: (prev.tasks || []).filter((t) => t.id !== task.id),
+                }
+              : prev
+          );
         } catch (err: any) {
           toast.error(
             err.response?.data?.message || 'Erreur lors de la suppression.'
@@ -414,10 +441,7 @@ export const ProjectDetailPage: React.FC = () => {
       {affiliationModalTask && (
         <TaskAffiliationModal
           isOpen={!!affiliationModalTask}
-          onClose={() => {
-            setAffiliationModalTask(null);
-            fetchProjectDetails();
-          }}
+          onClose={() => setAffiliationModalTask(null)}
           task={affiliationModalTask}
           onTaskUpdated={handleTaskUpdated}
         />

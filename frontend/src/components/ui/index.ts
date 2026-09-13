@@ -12,3 +12,6 @@ export * from './separator';
 export * from './alert';
 export * from './dropdown-menu';
 export * from './tooltip';
+export * from './popover';
+export * from './calendar';
+export * from './date-picker';

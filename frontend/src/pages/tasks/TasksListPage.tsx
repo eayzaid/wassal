@@ -88,7 +88,8 @@ export const TasksListPage: React.FC = () => {
     try {
       await tasksApi.requestAffiliation(task.id);
       toast.success('Demande de participation transmise');
-      fetchTasksAndProjects();
+      const updated = await tasksApi.getTaskById(task.id);
+      handleTaskUpdated(updated);
     } catch (err: any) {
       toast.error(
         err.response?.data?.message || 'Erreur lors de la demande de participation.'
@@ -408,10 +409,7 @@ export const TasksListPage: React.FC = () => {
       {affiliationModalTask && (
         <TaskAffiliationModal
           isOpen={!!affiliationModalTask}
-          onClose={() => {
-            setAffiliationModalTask(null);
-            fetchTasksAndProjects();
-          }}
+          onClose={() => setAffiliationModalTask(null)}
           task={affiliationModalTask}
           onTaskUpdated={handleTaskUpdated}
         />

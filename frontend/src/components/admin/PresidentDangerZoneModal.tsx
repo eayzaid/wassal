@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { caravaneApi } from '../../api/caravaneApi';
 import { usersApi } from '../../api/usersApi';
 import { UserSummaryDto, CurrentEditionResponse } from '../../types';
@@ -24,6 +24,8 @@ import {
   CheckCircle2,
   CalendarDays,
   ArrowRight,
+  Loader2,
+  X,
 } from 'lucide-react';
 
 interface PresidentDangerZoneModalProps {
@@ -42,6 +44,7 @@ export const PresidentDangerZoneModal: React.FC<PresidentDangerZoneModalProps> =
   const [mode, setMode] = useState<'TRANSFER_ONLY' | 'INCREMENT_AND_TRANSFER'>('TRANSFER_ONLY');
   const [members, setMembers] = useState<UserSummaryDto[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isDebouncing, setIsDebouncing] = useState(false);
   const [selectedMember, setSelectedMember] = useState<UserSummaryDto | null>(null);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [hasAcknowledged, setHasAcknowledged] = useState(false);
@@ -49,40 +52,42 @@ export const PresidentDangerZoneModal: React.FC<PresidentDangerZoneModalProps> =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Load current edition & members when opened
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load current edition ONLY when opened — do not fetch users initially
   useEffect(() => {
     if (!isOpen) return;
 
-    const loadData = async () => {
+    const loadEdition = async () => {
       try {
         const editionRes: CurrentEditionResponse = await caravaneApi.getCurrentEdition();
         setCurrentEdition(editionRes.currentEdition);
       } catch {
         // default fallback
       }
-
-      setIsLoadingMembers(true);
-      try {
-        const usersRes = await usersApi.listUsers({
-          status: 'APPROVED',
-          size: 100,
-        });
-        // Filter out current user
-        const list = (usersRes.content || []).filter((u) => u.id !== user?.id);
-        setMembers(list);
-      } catch {
-        setErrorMessage('Impossible de charger la liste des membres éligibles.');
-      } finally {
-        setIsLoadingMembers(false);
-      }
     };
 
-    loadData();
-  }, [isOpen, user?.id]);
+    loadEdition();
+  }, [isOpen]);
+
+  // Clean up debounce timer
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleClose = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
     setSelectedMember(null);
     setSearchQuery('');
+    setMembers([]);
+    setIsDebouncing(false);
+    setIsLoadingMembers(false);
     setHasAcknowledged(false);
     setConfirmationPhrase('');
     setErrorMessage(null);
@@ -95,12 +100,74 @@ export const PresidentDangerZoneModal: React.FC<PresidentDangerZoneModalProps> =
     hasAcknowledged &&
     confirmationPhrase.trim().toUpperCase() === 'CONFIRMER';
 
-  const filteredMembers = members.filter((m) => {
-    const fullName = `${m.firstName} ${m.lastName}`.toLowerCase();
-    const email = m.email.toLowerCase();
-    const query = searchQuery.toLowerCase();
-    return fullName.includes(query) || email.includes(query);
-  });
+  // Perform search call
+  const performSearch = useCallback(
+    async (query: string) => {
+      setIsLoadingMembers(true);
+      setErrorMessage(null);
+      try {
+        const res = await usersApi.listUsers({
+          q: query,
+          status: 'APPROVED',
+          blocked: false,
+          size: 20,
+        });
+        const list = (res.content || []).filter((u) => u.id !== user?.id);
+        setMembers(list);
+      } catch {
+        setErrorMessage('Erreur lors de la recherche des membres éligibles.');
+      } finally {
+        setIsLoadingMembers(false);
+      }
+    },
+    [user?.id]
+  );
+
+  // Debounced search handler (400ms idle delay)
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
+      setMembers([]);
+      setIsDebouncing(false);
+      setIsLoadingMembers(false);
+      return;
+    }
+
+    setIsDebouncing(true);
+    debounceTimerRef.current = setTimeout(() => {
+      setIsDebouncing(false);
+      performSearch(trimmed);
+    }, 400);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const trimmed = searchQuery.trim();
+      if (trimmed.length >= 2) {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        setIsDebouncing(false);
+        performSearch(trimmed);
+      }
+    }
+  };
+
+  const handleClearSearch = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setSearchQuery('');
+    setMembers([]);
+    setIsDebouncing(false);
+    setIsLoadingMembers(false);
+  };
 
   const handleExecute = async () => {
     if (!isConfirmed || !selectedMember) return;
@@ -116,7 +183,7 @@ export const PresidentDangerZoneModal: React.FC<PresidentDangerZoneModalProps> =
       }
       handleClose();
       if (onSuccess) onSuccess();
-      // Reload page to reflect new roles across context
+      // Reload to reflect new roles across application
       window.location.reload();
     } catch (err: any) {
       setErrorMessage(
@@ -243,23 +310,47 @@ export const PresidentDangerZoneModal: React.FC<PresidentDangerZoneModalProps> =
                   <input
                     type="text"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Rechercher un membre approuvé (nom ou email)..."
-                    className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-wassal-border bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Tapez un nom, prénom ou email pour rechercher..."
+                    className="w-full pl-9 pr-9 py-2 text-xs rounded-lg border border-wassal-border bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
                   />
+                  {isDebouncing || isLoadingMembers ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-rose-600 absolute right-3 top-1/2 -translate-y-1/2" />
+                  ) : searchQuery ? (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-wassal-slate hover:text-rose-600"
+                      title="Effacer la recherche"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  ) : null}
                 </div>
 
-                <div className="border border-wassal-border rounded-xl max-h-44 overflow-y-auto divide-y divide-wassal-border/50 bg-white">
-                  {isLoadingMembers ? (
-                    <div className="p-4 text-center text-xs text-wassal-slate">
-                      Chargement des membres...
+                <div className="border border-wassal-border rounded-xl max-h-48 overflow-y-auto divide-y divide-wassal-border/50 bg-white">
+                  {searchQuery.trim().length < 2 ? (
+                    <div className="p-5 text-center text-xs text-wassal-slate space-y-1">
+                      <Search className="w-5 h-5 mx-auto text-wassal-slate/50 mb-1" />
+                      <p className="font-semibold text-wassal-plum">
+                        Commencez la recherche
+                      </p>
+                      <p className="text-[11px] text-wassal-slate max-w-xs mx-auto">
+                        Saisissez au moins 2 caractères pour rechercher un membre approuvé éligible à la présidence.
+                      </p>
                     </div>
-                  ) : filteredMembers.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-wassal-slate">
-                      Aucun membre approuvé trouvé
+                  ) : isLoadingMembers || isDebouncing ? (
+                    <div className="p-5 text-center text-xs text-wassal-slate flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-rose-600" />
+                      <span>Recherche des membres éligibles...</span>
+                    </div>
+                  ) : members.length === 0 ? (
+                    <div className="p-5 text-center text-xs text-wassal-slate">
+                      Aucun membre approuvé ne correspond à "{searchQuery.trim()}".
                     </div>
                   ) : (
-                    filteredMembers.map((m) => (
+                    members.map((m) => (
                       <button
                         key={m.id}
                         type="button"
