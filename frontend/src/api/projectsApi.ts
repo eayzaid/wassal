@@ -6,22 +6,29 @@ import {
   CreateTaskRequest,
   TaskFullDto,
   ProjectStatus,
+  PageResponse,
 } from '../types';
 
 export interface ProjectFilterParams {
   edition?: number;
   status?: ProjectStatus;
   search?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
 }
 
 export const projectsApi = {
-  listProjects: async (params?: ProjectFilterParams): Promise<ProjectDto[]> => {
+  listProjects: async (params?: ProjectFilterParams): Promise<PageResponse<ProjectDto>> => {
     const cleanParams: Record<string, string | number> = {};
     if (params?.edition) cleanParams.edition = params.edition;
     if (params?.status) cleanParams.status = params.status;
     if (params?.search?.trim()) cleanParams.search = params.search.trim();
+    if (params?.page !== undefined) cleanParams.page = params.page;
+    if (params?.size !== undefined) cleanParams.size = params.size;
+    if (params?.sort) cleanParams.sort = params.sort;
 
-    const response = await apiClient.get<ProjectDto[]>('/projects', { params: cleanParams });
+    const response = await apiClient.get<PageResponse<ProjectDto>>('/projects', { params: cleanParams });
     return response.data;
   },
 

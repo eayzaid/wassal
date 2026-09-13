@@ -32,6 +32,7 @@ interface TaskCardProps {
   onRejectDone?: (task: TaskDto) => void;
   onManageAffiliations?: (task: TaskDto) => void;
   onDelete?: (task: TaskDto) => void;
+  isJoining?: boolean;
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({
@@ -42,6 +43,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   onRejectDone,
   onManageAffiliations,
   onDelete,
+  isJoining = false,
 }) => {
   const { user } = useAuth();
   const isFull = isTaskFullDto(task);
@@ -146,12 +148,22 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             <Button
               variant="outline"
               size="sm"
+              disabled={isJoining}
+              isLoading={isJoining}
               onClick={() => onRequestJoin(task)}
               className="flex-1 h-9 text-xs font-semibold text-wassal-green-ink border-wassal-green hover:bg-wassal-green/10 gap-1.5"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>Rejoindre</span>
             </Button>
+          )}
+
+          {/* Affiliation Request Pending Indicator */}
+          {(task.hasPendingAffiliationRequest || task.hasRequestedAffiliation) && !isAffiliatedWithTask(user?.id, task) && (
+            <div className="flex-1 h-9 flex items-center justify-center gap-1.5 px-3 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold select-none">
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span>Demande envoyée</span>
+            </div>
           )}
 
           {/* 2. Affiliated Member: Declare Done */}

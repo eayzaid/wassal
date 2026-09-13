@@ -56,6 +56,8 @@ export interface TaskPublicDto {
   createdAt: string;
   updatedAt: string;
   activeMembers: TaskMemberDto[];
+  hasPendingAffiliationRequest?: boolean;
+  hasRequestedAffiliation?: boolean;
 }
 
 export interface TaskFullDto extends TaskPublicDto {

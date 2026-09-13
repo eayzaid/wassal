@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { tasksApi } from '../../api/tasksApi';
 import { projectsApi } from '../../api/projectsApi';
 import { TaskDto, ProjectDto, TaskType, TaskFullDto } from '../../types';
@@ -9,6 +9,7 @@ import { TaskCard } from '../../components/tasks/TaskCard';
 import { CreateTaskModal } from '../../components/tasks/CreateTaskModal';
 import { TaskAffiliationModal } from '../../components/tasks/TaskAffiliationModal';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
+import { Pagination } from '../../components/common/Pagination';
 import { Button } from '../../components/ui/button';
 import {
   ListTodo,
@@ -18,6 +19,8 @@ import {
   CheckCircle2,
   Clock,
   UserCheck,
+  Loader2,
+  X,
 } from 'lucide-react';
 
 type TabView = 'ALL' | 'MY_TASKS' | 'PENDING' | 'DONE';
@@ -29,12 +32,28 @@ export const TasksListPage: React.FC = () => {
   const [tasks, setTasks] = useState<TaskDto[]>([]);
   const [projects, setProjects] = useState<ProjectDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const [isJoiningTaskId, setIsJoiningTaskId] = useState<number | null>(null);
 
-  // Filters
+  // Filters & Search
   const [currentTab, setCurrentTab] = useState<TabView>('ALL');
   const [typeFilter, setTypeFilter] = useState<'ALL' | TaskType>('ALL');
   const [selectedProjectId, setSelectedProjectId] = useState<number | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isDebouncing, setIsDebouncing] = useState(false);
+
+  // Counts for tabs
+  const [counts, setCounts] = useState<{ all: number; myTasks: number; pending: number; done: number }>({
+    all: 0,
+    myTasks: 0,
+    pending: 0,
+    done: 0,
+  });
+
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Modals
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
@@ -47,35 +66,195 @@ export const TasksListPage: React.FC = () => {
     action: () => Promise<void>;
   } | null>(null);
 
-  const fetchTasksAndProjects = useCallback(async () => {
-    setIsLoading(true);
+  // Clean up debounce timer
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setIsDebouncing(true);
+    debounceTimerRef.current = setTimeout(() => {
+      setIsDebouncing(false);
+      setDebouncedSearch(value.trim());
+      setPage(0);
+    }, 400);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      setIsDebouncing(false);
+      setDebouncedSearch(searchQuery.trim());
+      setPage(0);
+    }
+  };
+
+  const handleClearSearch = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setSearchQuery('');
+    setDebouncedSearch('');
+    setIsDebouncing(false);
+    setPage(0);
+  };
+
+  const handleTabChange = (tab: TabView) => {
+    setCurrentTab(tab);
+    setPage(0);
+  };
+
+  const handleTypeChange = (type: 'ALL' | TaskType) => {
+    setTypeFilter(type);
+    setPage(0);
+  };
+
+  const handleProjectChange = (projectId: number | 'ALL') => {
+    setSelectedProjectId(projectId);
+    setPage(0);
+  };
+
+  // Fetch counts for tabs
+  const fetchCounts = useCallback(async () => {
     try {
-      const [tasksRes, projectsRes] = await Promise.allSettled([
-        tasksApi.listTasks(),
-        projectsApi.listProjects(),
+      const [allRes, pendingRes, doneRes, allTasksRes] = await Promise.allSettled([
+        tasksApi.listTasks({ size: 1 }),
+        tasksApi.listTasks({ status: 'PENDING_CONFIRMATION', size: 1 }),
+        tasksApi.listTasks({ status: 'DONE', size: 1 }),
+        tasksApi.listTasks({ size: 100 }),
       ]);
 
-      if (tasksRes.status === 'fulfilled') {
-        setTasks(tasksRes.value);
-      } else {
-        toast.error('Impossible de charger les tâches.');
+      const allCount =
+        allRes.status === 'fulfilled'
+          ? (allRes.value as any).page?.totalElements ?? (allRes.value as any).totalElements ?? 0
+          : 0;
+      const pendingCount =
+        pendingRes.status === 'fulfilled'
+          ? (pendingRes.value as any).page?.totalElements ?? (pendingRes.value as any).totalElements ?? 0
+          : 0;
+      const doneCount =
+        doneRes.status === 'fulfilled'
+          ? (doneRes.value as any).page?.totalElements ?? (doneRes.value as any).totalElements ?? 0
+          : 0;
+
+      let myTasksCount = 0;
+      if (allTasksRes.status === 'fulfilled') {
+        const resVal: any = allTasksRes.value;
+        const items: TaskDto[] = resVal.content || (Array.isArray(resVal) ? resVal : []);
+        myTasksCount = items.filter((t) => isAffiliatedWithTask(user?.id, t)).length;
       }
 
-      if (projectsRes.status === 'fulfilled') {
-        setProjects(projectsRes.value);
+      setCounts({
+        all: allCount,
+        myTasks: myTasksCount,
+        pending: pendingCount,
+        done: doneCount,
+      });
+    } catch {
+      // non-critical
+    }
+  }, [user?.id]);
+
+  // Fetch projects dropdown list once
+  useEffect(() => {
+    const fetchProjectsList = async () => {
+      try {
+        const res: any = await projectsApi.listProjects({ size: 100 });
+        const items = Array.isArray(res) ? res : res.content || [];
+        setProjects(items);
+      } catch {
+        // non-critical
       }
+    };
+    fetchProjectsList();
+    fetchCounts();
+  }, [fetchCounts]);
+
+  // Fetch tasks with pagination & filters
+  const fetchTasks = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const isClientFiltered = Boolean(
+        debouncedSearch ||
+        typeFilter !== 'ALL' ||
+        currentTab === 'MY_TASKS'
+      );
+
+      const backendStatus =
+        currentTab === 'PENDING'
+          ? 'PENDING_CONFIRMATION'
+          : currentTab === 'DONE'
+          ? 'DONE'
+          : undefined;
+
+      if (isClientFiltered) {
+        const res: any = await tasksApi.listTasks({
+          status: backendStatus,
+          projectId: selectedProjectId !== 'ALL' ? selectedProjectId : undefined,
+          size: 100,
+          sort: 'createdAt,desc',
+        });
+        const allItems: TaskDto[] = res.content || (Array.isArray(res) ? res : []);
+
+        const filtered = allItems.filter((t) => {
+          const matchesSearch =
+            !debouncedSearch ||
+            t.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            (t.description && t.description.toLowerCase().includes(debouncedSearch.toLowerCase()));
+
+          let matchesTab = true;
+          if (currentTab === 'MY_TASKS') {
+            matchesTab = isAffiliatedWithTask(user?.id, t);
+          }
+
+          const matchesType = typeFilter === 'ALL' || t.type === typeFilter;
+
+          return matchesSearch && matchesTab && matchesType;
+        });
+
+        const start = page * 10;
+        setTasks(filtered.slice(start, start + 10));
+        setTotalElements(filtered.length);
+        setTotalPages(Math.ceil(filtered.length / 10) || 1);
+      } else {
+        const res: any = await tasksApi.listTasks({
+          status: backendStatus,
+          projectId: selectedProjectId !== 'ALL' ? selectedProjectId : undefined,
+          page,
+          size: 10,
+          sort: 'createdAt,desc',
+        });
+
+        const items = res.content || [];
+        setTasks(items);
+        setTotalElements(res.page?.totalElements ?? res.totalElements ?? items.length);
+        setTotalPages(res.page?.totalPages ?? res.totalPages ?? 1);
+      }
+    } catch {
+      toast.error('Impossible de charger les tâches.');
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [currentTab, typeFilter, selectedProjectId, debouncedSearch, page, user?.id, toast]);
 
   useEffect(() => {
-    fetchTasksAndProjects();
-  }, [fetchTasksAndProjects]);
+    fetchTasks();
+  }, [fetchTasks]);
 
   // Actions
-  const handleTaskCreated = (newTask: TaskFullDto) => {
-    setTasks((prev) => [newTask, ...prev]);
+  const handleTaskCreated = (_newTask: TaskFullDto) => {
+    fetchTasks();
+    fetchCounts();
     toast.success('Nouvelle tâche créée avec succès !');
     setIsCreateTaskOpen(false);
   };
@@ -88,15 +267,26 @@ export const TasksListPage: React.FC = () => {
   };
 
   const handleRequestJoin = async (task: TaskDto) => {
+    setIsJoiningTaskId(task.id);
+    const optimisticTask: TaskDto = {
+      ...task,
+      hasPendingAffiliationRequest: true,
+      hasRequestedAffiliation: true,
+    };
+    handleTaskUpdated(optimisticTask);
+
     try {
       await tasksApi.requestAffiliation(task.id);
       toast.success('Demande de participation transmise');
       const updated = await tasksApi.getTaskById(task.id);
       handleTaskUpdated(updated);
     } catch (err: any) {
+      handleTaskUpdated(task);
       toast.error(
         err.response?.data?.message || 'Erreur lors de la demande de participation.'
       );
+    } finally {
+      setIsJoiningTaskId(null);
     }
   };
 
@@ -111,6 +301,7 @@ export const TasksListPage: React.FC = () => {
           const updated = await tasksApi.requestDone(task.id);
           toast.success('Tâche déclarée achevée');
           setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+          fetchCounts();
         } catch (err: any) {
           toast.error(
             err.response?.data?.message || 'Erreur lors de la déclaration.'
@@ -127,6 +318,7 @@ export const TasksListPage: React.FC = () => {
       const updated = await tasksApi.confirmDone(task.id);
       toast.success(`Tâche "${task.name}" validée et achevée`);
       setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+      fetchCounts();
     } catch (err: any) {
       toast.error(
         err.response?.data?.message || 'Erreur lors de la validation.'
@@ -139,6 +331,7 @@ export const TasksListPage: React.FC = () => {
       const updated = await tasksApi.rejectDone(task.id);
       toast.info(`La déclaration d'achèvement a été rejetée.`);
       setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+      fetchCounts();
     } catch (err: any) {
       toast.error(
         err.response?.data?.message || 'Erreur lors du rejet.'
@@ -157,6 +350,7 @@ export const TasksListPage: React.FC = () => {
           await tasksApi.deleteTask(task.id);
           toast.success('Tâche supprimée avec succès');
           setTasks((prev) => prev.filter((t) => t.id !== task.id));
+          fetchCounts();
         } catch (err: any) {
           toast.error(
             err.response?.data?.message || 'Erreur lors de la suppression.'
@@ -167,37 +361,6 @@ export const TasksListPage: React.FC = () => {
       },
     });
   };
-
-  // Filter computation
-  const filteredTasks = tasks.filter((t) => {
-    // 1. Search Query
-    const matchesSearch =
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    // 2. Tab Filter
-    let matchesTab = true;
-    if (currentTab === 'MY_TASKS') {
-      matchesTab = isAffiliatedWithTask(user?.id, t);
-    } else if (currentTab === 'PENDING') {
-      matchesTab = t.status === 'PENDING_CONFIRMATION';
-    } else if (currentTab === 'DONE') {
-      matchesTab = t.status === 'DONE';
-    }
-
-    // 3. Type Filter
-    const matchesType = typeFilter === 'ALL' || t.type === typeFilter;
-
-    // 4. Project Filter
-    const matchesProject =
-      selectedProjectId === 'ALL' || t.projectId === selectedProjectId;
-
-    return matchesSearch && matchesTab && matchesType && matchesProject;
-  });
-
-  const myTasksCount = tasks.filter((t) => isAffiliatedWithTask(user?.id, t)).length;
-  const pendingCount = tasks.filter((t) => t.status === 'PENDING_CONFIRMATION').length;
-  const doneCount = tasks.filter((t) => t.status === 'DONE').length;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -216,7 +379,10 @@ export const TasksListPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchTasksAndProjects}
+            onClick={() => {
+              fetchTasks();
+              fetchCounts();
+            }}
             disabled={isLoading}
             className="h-10 text-wassal-slate hover:text-wassal-plum"
             title="Actualiser"
@@ -242,7 +408,7 @@ export const TasksListPage: React.FC = () => {
       <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-wassal-border">
         <button
           type="button"
-          onClick={() => setCurrentTab('ALL')}
+          onClick={() => handleTabChange('ALL')}
           className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
             currentTab === 'ALL'
               ? 'border-wassal-plum text-wassal-plum bg-wassal-plum/5'
@@ -250,12 +416,12 @@ export const TasksListPage: React.FC = () => {
           }`}
         >
           <ListTodo className="w-4 h-4" />
-          <span>Toutes ({tasks.length})</span>
+          <span>Toutes ({counts.all})</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setCurrentTab('MY_TASKS')}
+          onClick={() => handleTabChange('MY_TASKS')}
           className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
             currentTab === 'MY_TASKS'
               ? 'border-wassal-plum text-wassal-plum bg-wassal-plum/5'
@@ -263,12 +429,12 @@ export const TasksListPage: React.FC = () => {
           }`}
         >
           <UserCheck className="w-4 h-4" />
-          <span>Mes affectations ({myTasksCount})</span>
+          <span>Mes affectations ({counts.myTasks})</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setCurrentTab('PENDING')}
+          onClick={() => handleTabChange('PENDING')}
           className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
             currentTab === 'PENDING'
               ? 'border-amber-600 text-amber-700 bg-amber-50/50'
@@ -276,12 +442,12 @@ export const TasksListPage: React.FC = () => {
           }`}
         >
           <Clock className="w-4 h-4" />
-          <span>À valider ({pendingCount})</span>
+          <span>À valider ({counts.pending})</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setCurrentTab('DONE')}
+          onClick={() => handleTabChange('DONE')}
           className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
             currentTab === 'DONE'
               ? 'border-wassal-green-ink text-wassal-green-ink bg-wassal-green/5'
@@ -289,7 +455,7 @@ export const TasksListPage: React.FC = () => {
           }`}
         >
           <CheckCircle2 className="w-4 h-4" />
-          <span>Achevées ({doneCount})</span>
+          <span>Achevées ({counts.done})</span>
         </button>
       </div>
 
@@ -298,21 +464,38 @@ export const TasksListPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
           {/* Search bar */}
           <div className="relative sm:col-span-6">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-wassal-slate" />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-wassal-slate">
+              {isDebouncing || isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-wassal-green-ink" />
+              ) : (
+                <Search className="w-4 h-4 text-wassal-slate" />
+              )}
+            </div>
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               placeholder="Rechercher par intitulé, description..."
-              className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-wassal-border bg-wassal-bg/30 focus:outline-none focus:ring-2 focus:ring-wassal-green focus:bg-white transition-all"
+              className="w-full pl-9 pr-9 py-2 text-xs sm:text-sm rounded-xl border border-wassal-border bg-wassal-bg/30 focus:outline-none focus:ring-2 focus:ring-wassal-green focus:bg-white transition-all"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-wassal-slate hover:text-wassal-plum p-0.5 rounded-full transition-colors"
+                title="Effacer la recherche"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           {/* Type Filter */}
           <div className="sm:col-span-3">
             <select
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as any)}
+              onChange={(e) => handleTypeChange(e.target.value as any)}
               className="w-full h-10 px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum focus:outline-none focus:ring-2 focus:ring-wassal-green font-medium"
             >
               <option value="ALL">Tous types de tâche</option>
@@ -326,7 +509,7 @@ export const TasksListPage: React.FC = () => {
             <select
               value={selectedProjectId}
               onChange={(e) =>
-                setSelectedProjectId(
+                handleProjectChange(
                   e.target.value === 'ALL' ? 'ALL' : Number(e.target.value)
                 )
               }
@@ -360,7 +543,7 @@ export const TasksListPage: React.FC = () => {
             </div>
           ))}
         </div>
-      ) : filteredTasks.length === 0 ? (
+      ) : tasks.length === 0 ? (
         <div className="bg-white rounded-2xl border border-dashed border-wassal-border p-12 text-center max-w-md mx-auto my-8">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-wassal-bg flex items-center justify-center text-wassal-slate mb-3">
             <ListTodo className="w-7 h-7" />
@@ -385,10 +568,11 @@ export const TasksListPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredTasks.map((task) => (
+          {tasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
+              isJoining={isJoiningTaskId === task.id}
               onRequestJoin={handleRequestJoin}
               onRequestDone={handleRequestDone}
               onConfirmDone={handleConfirmDone}
@@ -398,6 +582,17 @@ export const TasksListPage: React.FC = () => {
             />
           ))}
         </div>
+      )}
+
+      {/* Pagination */}
+      {!isLoading && totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalElements={totalElements}
+          pageSize={10}
+          onPageChange={(newPage) => setPage(newPage)}
+        />
       )}
 
       {/* Modals & Dialogs */}

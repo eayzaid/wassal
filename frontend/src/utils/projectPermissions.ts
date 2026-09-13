@@ -69,6 +69,7 @@ export const canJoinTask = (
 ): boolean => {
   if (!user || !task) return false;
   if (task.status === 'DONE') return false;
+  if (task.hasPendingAffiliationRequest || task.hasRequestedAffiliation) return false;
   return !isAffiliatedWithTask(user.id, task);
 };
 

@@ -40,9 +40,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const error = useCallback((msg: string) => showToast(msg, 'error'), [showToast]);
   const warning = useCallback((msg: string) => showToast(msg, 'warning'), [showToast]);
   const info = useCallback((msg: string) => showToast(msg, 'info'), [showToast]);
+  const contextValue = React.useMemo(
+    () => ({ showToast, success, error, warning, info }),
+    [showToast, success, error, warning, info]
+  );
 
   return (
-    <ToastContext.Provider value={{ showToast, success, error, warning, info }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-md w-full pointer-events-none px-4">
         {toasts.map((toast) => (

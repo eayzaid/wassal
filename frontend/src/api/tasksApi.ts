@@ -8,6 +8,7 @@ import {
   TaskStatus,
   Decision,
   MessageResponse,
+  PageResponse,
 } from '../types';
 
 export interface TaskFilterParams {
@@ -17,10 +18,13 @@ export interface TaskFilterParams {
   standalone?: boolean;
   mine?: boolean;
   completedByMe?: boolean;
+  page?: number;
+  size?: number;
+  sort?: string;
 }
 
 export const tasksApi = {
-  listTasks: async (params?: TaskFilterParams): Promise<TaskDto[]> => {
+  listTasks: async (params?: TaskFilterParams): Promise<PageResponse<TaskDto>> => {
     const cleanParams: Record<string, string | number | boolean> = {};
     if (params?.edition) cleanParams.edition = params.edition;
     if (params?.status) cleanParams.status = params.status;
@@ -28,8 +32,11 @@ export const tasksApi = {
     if (params?.standalone !== undefined) cleanParams.standalone = params.standalone;
     if (params?.mine !== undefined) cleanParams.mine = params.mine;
     if (params?.completedByMe !== undefined) cleanParams.completedByMe = params.completedByMe;
+    if (params?.page !== undefined) cleanParams.page = params.page;
+    if (params?.size !== undefined) cleanParams.size = params.size;
+    if (params?.sort) cleanParams.sort = params.sort;
 
-    const response = await apiClient.get<TaskDto[]>('/tasks', { params: cleanParams });
+    const response = await apiClient.get<PageResponse<TaskDto>>('/tasks', { params: cleanParams });
     return response.data;
   },
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   TaskDto,
   TaskMemberDto,
@@ -30,6 +30,7 @@ import {
   Briefcase,
   AlertCircle,
   Search,
+  Loader2,
 } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { formatDate } from '../../utils/formatters';
@@ -60,10 +61,12 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
   const [requests, setRequests] = useState<AffiliationRequestDto[]>([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
 
-  // Direct assign search
-  const [allUsers, setAllUsers] = useState<UserSummaryDto[]>([]);
+  // Direct assign search with 400ms debouncing (no prefetching)
+  const [searchedUsers, setSearchedUsers] = useState<UserSummaryDto[]>([]);
   const [userSearch, setUserSearch] = useState('');
+  const [isDebouncing, setIsDebouncing] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Action loading state
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -94,29 +97,91 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
     }
   }, [task]);
 
-  const fetchAssignableUsers = useCallback(async () => {
-    setIsLoadingUsers(true);
-    try {
-      const res = await usersApi.listUsers({
-        status: 'APPROVED',
-        blocked: false,
-        size: 50,
-      });
-      setAllUsers(res.content || []);
-    } catch {
-      // ignore
-    } finally {
-      setIsLoadingUsers(false);
-    }
+  // Clean up debounce timer
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
     if (isOpen && task) {
       fetchActiveMembers();
       fetchRequests();
-      fetchAssignableUsers();
+      // Reset search on modal open
+      setUserSearch('');
+      setSearchedUsers([]);
+      setIsDebouncing(false);
+      setIsLoadingUsers(false);
     }
-  }, [isOpen, task, fetchActiveMembers, fetchRequests, fetchAssignableUsers]);
+  }, [isOpen, task, fetchActiveMembers, fetchRequests]);
+
+  const performUserSearch = useCallback(
+    async (query: string) => {
+      setIsLoadingUsers(true);
+      try {
+        const res = await usersApi.listUsers({
+          q: query,
+          status: 'APPROVED',
+          blocked: false,
+          size: 20,
+        });
+        setSearchedUsers(res.content || []);
+      } catch {
+        toast.error('Erreur lors de la recherche des membres.');
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    },
+    [toast]
+  );
+
+  const handleUserSearchChange = (value: string) => {
+    setUserSearch(value);
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
+      setSearchedUsers([]);
+      setIsDebouncing(false);
+      setIsLoadingUsers(false);
+      return;
+    }
+
+    setIsDebouncing(true);
+    debounceTimerRef.current = setTimeout(() => {
+      setIsDebouncing(false);
+      performUserSearch(trimmed);
+    }, 400);
+  };
+
+  const handleUserSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const trimmed = userSearch.trim();
+      if (trimmed.length >= 2) {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        setIsDebouncing(false);
+        performUserSearch(trimmed);
+      }
+    }
+  };
+
+  const handleClearUserSearch = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setUserSearch('');
+    setSearchedUsers([]);
+    setIsDebouncing(false);
+    setIsLoadingUsers(false);
+  };
 
   if (!task) return null;
 
@@ -153,6 +218,7 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
     try {
       await tasksApi.directAssignMember(task.id, user.id);
       toast.success(`${user.firstName} ${user.lastName} affecté(e) à la mission.`);
+      setSearchedUsers((prev) => prev.filter((u) => u.id !== user.id));
       await fetchActiveMembers();
       const updated = await tasksApi.getTaskById(task.id);
       onTaskUpdated?.(updated);
@@ -184,17 +250,9 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
   };
 
   // Filter assignable users who are not already active members
-  const filteredUsers = allUsers.filter((u) => {
-    const isAlreadyMember = activeMembers.some((m) => m.userId === u.id);
-    if (isAlreadyMember) return false;
-    if (!userSearch.trim()) return true;
-    const term = userSearch.toLowerCase();
-    return (
-      u.firstName.toLowerCase().includes(term) ||
-      u.lastName.toLowerCase().includes(term) ||
-      u.email.toLowerCase().includes(term)
-    );
-  });
+  const assignableUsers = searchedUsers.filter(
+    (u) => !activeMembers.some((m) => m.userId === u.id)
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -392,27 +450,53 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
           {/* TAB 3: Direct Assign Member */}
           <TabsContent value="assign" className="flex-1 flex flex-col min-h-0 pt-1">
             <div className="relative mb-3 shrink-0">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-wassal-slate" />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-wassal-slate">
+                {isDebouncing || isLoadingUsers ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-wassal-green-ink" />
+                ) : (
+                  <Search className="w-4 h-4 text-wassal-slate" />
+                )}
+              </div>
               <input
                 type="text"
-                placeholder="Rechercher un membre par nom ou email..."
+                placeholder="Rechercher un membre par nom ou email (min. 2 car.)..."
                 value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                className="w-full h-10 pl-9 pr-3 text-xs rounded-xl border border-wassal-border bg-wassal-surface text-wassal-ink focus:outline-none focus:ring-2 focus:ring-wassal-green/40 focus:border-wassal-green-ink transition"
+                onChange={(e) => handleUserSearchChange(e.target.value)}
+                onKeyDown={handleUserSearchKeyDown}
+                className="w-full h-10 pl-9 pr-9 text-xs rounded-xl border border-wassal-border bg-wassal-surface text-wassal-ink focus:outline-none focus:ring-2 focus:ring-wassal-green/40 focus:border-wassal-green-ink transition"
               />
+              {userSearch && (
+                <button
+                  type="button"
+                  onClick={handleClearUserSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-wassal-slate hover:text-wassal-plum p-0.5 rounded-full transition-colors"
+                  title="Effacer la recherche"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-              {isLoadingUsers ? (
-                <div className="py-12 text-center text-xs text-wassal-slate">
-                  Chargement des membres...
+              {userSearch.trim().length < 2 ? (
+                <div className="py-12 text-center text-wassal-slate space-y-2">
+                  <Search className="w-8 h-8 mx-auto text-wassal-slate/40" />
+                  <p className="text-xs font-semibold text-wassal-plum">Rechercher un membre</p>
+                  <p className="text-[11px] text-wassal-slate/80 max-w-xs mx-auto">
+                    Saisissez au moins 2 caractères (nom, prénom ou email) pour trouver et affecter un bénévole à cette mission.
+                  </p>
                 </div>
-              ) : filteredUsers.length === 0 ? (
+              ) : isLoadingUsers ? (
+                <div className="py-12 text-center text-xs text-wassal-slate flex flex-col items-center gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-wassal-green-ink" />
+                  <span>Recherche des membres disponibles...</span>
+                </div>
+              ) : assignableUsers.length === 0 ? (
                 <div className="py-12 text-center text-xs text-wassal-slate">
-                  Aucun membre disponible trouvé.
+                  Aucun membre disponible ne correspond à &quot;{userSearch.trim()}&quot;.
                 </div>
               ) : (
-                filteredUsers.map((u) => (
+                assignableUsers.map((u) => (
                   <div
                     key={u.id}
                     className="p-3 rounded-xl border border-wassal-border bg-wassal-surface flex items-center justify-between gap-3 shadow-2xs hover:border-wassal-sage/50 transition-colors"

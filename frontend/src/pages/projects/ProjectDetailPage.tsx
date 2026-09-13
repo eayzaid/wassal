@@ -12,6 +12,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { canManageProject } from '../../utils/projectPermissions';
 import { ProjectStatusBadge } from '../../components/common/ProjectStatusBadge';
+import { Pagination } from '../../components/common/Pagination';
 import { TaskCard } from '../../components/tasks/TaskCard';
 import { CreateTaskModal } from '../../components/tasks/CreateTaskModal';
 import { TaskAffiliationModal } from '../../components/tasks/TaskAffiliationModal';
@@ -37,7 +38,12 @@ export const ProjectDetailPage: React.FC = () => {
 
   const [project, setProject] = useState<ProjectDto | null>(null);
   const [tasks, setTasks] = useState<TaskDto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isTasksLoading, setIsTasksLoading] = useState(false);
+  const [taskPage, setTaskPage] = useState(0);
+  const [taskTotalPages, setTaskTotalPages] = useState(1);
+  const [taskTotalElements, setTaskTotalElements] = useState(0);
+  const [isJoiningTaskId, setIsJoiningTaskId] = useState<number | null>(null);
 
   // Modals & Dialogs
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
@@ -51,29 +57,56 @@ export const ProjectDetailPage: React.FC = () => {
   } | null>(null);
   const [isMarkingDone, setIsMarkingDone] = useState(false);
 
+  const fetchTasksPage = useCallback(
+    async (pageToLoad: number) => {
+      if (!projectId) return;
+      setIsTasksLoading(true);
+      try {
+        const tasksRes = await tasksApi.listTasks({
+          projectId,
+          page: pageToLoad,
+          size: 10,
+          sort: 'createdAt,desc',
+        });
+        const items = Array.isArray(tasksRes) ? tasksRes : (tasksRes as any).content || [];
+        setTasks(items);
+        setTaskPage(pageToLoad);
+        const total =
+          (tasksRes as any).page?.totalElements ??
+          (tasksRes as any).totalElements ??
+          items.length;
+        const pages =
+          (tasksRes as any).page?.totalPages ?? (tasksRes as any).totalPages ?? 1;
+        setTaskTotalElements(total);
+        setTaskTotalPages(pages);
+      } catch {
+        toast.error('Impossible de charger les tâches du projet.');
+      } finally {
+        setIsTasksLoading(false);
+      }
+    },
+    [projectId, toast]
+  );
+
   const fetchProjectDetails = useCallback(async () => {
     if (!projectId) return;
-    setIsLoading(true);
     try {
-      const [projRes, tasksRes] = await Promise.all([
-        projectsApi.getProjectById(projectId),
-        tasksApi.listTasks({ projectId }),
-      ]);
+      const projRes = await projectsApi.getProjectById(projectId);
       setProject(projRes);
-      setTasks(tasksRes);
+      await fetchTasksPage(0);
     } catch {
       toast.error('Impossible de charger les détails du projet.');
       navigate('/projects');
     } finally {
-      setIsLoading(false);
+      setIsInitialLoading(false);
     }
-  }, [projectId, navigate, toast]);
+  }, [projectId, navigate, toast, fetchTasksPage]);
 
   useEffect(() => {
     fetchProjectDetails();
   }, [fetchProjectDetails]);
 
-  if (isLoading || !project) {
+  if (isInitialLoading || !project) {
     return (
       <div className="max-w-6xl mx-auto py-12 text-center">
         <RefreshCw className="w-8 h-8 animate-spin mx-auto text-wassal-plum mb-3" />
@@ -87,7 +120,8 @@ export const ProjectDetailPage: React.FC = () => {
   const isProjectDone = project.status === 'DONE';
 
   // BR-T15 Rule: All tasks under project must be DONE before marking project DONE
-  const allTasksDone = tasks.length > 0 && tasks.every((t) => t.status === 'DONE');
+  const allProjectTasks = project.tasks || [];
+  const allTasksDone = allProjectTasks.length > 0 && allProjectTasks.every((t) => t.status === 'DONE');
   const canMarkProjectDone = isOwnerOrAdmin && !isProjectDone && allTasksDone;
 
   const formattedEndDate = new Date(project.expectedEndTime).toLocaleDateString('fr-FR', {
@@ -97,8 +131,12 @@ export const ProjectDetailPage: React.FC = () => {
   });
 
   const completionRate =
-    tasks.length > 0
-      ? Math.round((tasks.filter((t) => t.status === 'DONE').length / tasks.length) * 100)
+    allProjectTasks.length > 0
+      ? Math.round(
+          (allProjectTasks.filter((t) => t.status === 'DONE').length /
+            allProjectTasks.length) *
+            100
+        )
       : 0;
 
   // Actions
@@ -129,7 +167,6 @@ export const ProjectDetailPage: React.FC = () => {
   };
 
   const handleTaskCreated = (newTask: TaskFullDto) => {
-    setTasks((prev) => [newTask, ...prev]);
     setProject((prev) =>
       prev
         ? {
@@ -138,6 +175,7 @@ export const ProjectDetailPage: React.FC = () => {
           }
         : prev
     );
+    fetchTasksPage(0);
     toast.success('Tâche ajoutée au projet avec succès !');
     setIsCreateTaskOpen(false);
   };
@@ -160,15 +198,26 @@ export const ProjectDetailPage: React.FC = () => {
   };
 
   const handleRequestJoinTask = async (task: TaskDto) => {
+    setIsJoiningTaskId(task.id);
+    const optimisticTask: TaskDto = {
+      ...task,
+      hasPendingAffiliationRequest: true,
+      hasRequestedAffiliation: true,
+    };
+    handleTaskUpdated(optimisticTask);
+
     try {
       await tasksApi.requestAffiliation(task.id);
       toast.success('Demande de participation envoyée');
       const updated = await tasksApi.getTaskById(task.id);
       handleTaskUpdated(updated);
     } catch (err: any) {
+      handleTaskUpdated(task);
       toast.error(
         err.response?.data?.message || 'Erreur lors de la demande de participation.'
       );
+    } finally {
+      setIsJoiningTaskId(null);
     }
   };
 
@@ -228,7 +277,6 @@ export const ProjectDetailPage: React.FC = () => {
         try {
           await tasksApi.deleteTask(task.id);
           toast.success('Tâche supprimée');
-          setTasks((prev) => prev.filter((t) => t.id !== task.id));
           setProject((prev) =>
             prev
               ? {
@@ -237,6 +285,8 @@ export const ProjectDetailPage: React.FC = () => {
                 }
               : prev
           );
+          const newTargetPage = tasks.length === 1 && taskPage > 0 ? taskPage - 1 : taskPage;
+          fetchTasksPage(newTargetPage);
         } catch (err: any) {
           toast.error(
             err.response?.data?.message || 'Erreur lors de la suppression.'
@@ -390,7 +440,12 @@ export const ProjectDetailPage: React.FC = () => {
       </div>
 
       {/* Tasks Grid */}
-      {tasks.length === 0 ? (
+      {isTasksLoading ? (
+        <div className="py-16 text-center text-wassal-slate bg-white rounded-2xl border border-wassal-border">
+          <RefreshCw className="w-7 h-7 animate-spin mx-auto text-wassal-plum mb-2" />
+          <p className="text-xs font-medium">Chargement des tâches...</p>
+        </div>
+      ) : tasks.length === 0 ? (
         <div className="bg-white rounded-2xl border border-dashed border-wassal-border p-12 text-center max-w-md mx-auto">
           <div className="w-12 h-12 mx-auto rounded-xl bg-wassal-bg flex items-center justify-center text-wassal-slate mb-3">
             <ListTodo className="w-6 h-6" />
@@ -414,19 +469,32 @@ export const ProjectDetailPage: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onRequestJoin={handleRequestJoinTask}
-              onRequestDone={handleRequestDoneTask}
-              onConfirmDone={handleConfirmDoneTask}
-              onRejectDone={handleRejectDoneTask}
-              onManageAffiliations={(t) => setAffiliationModalTask(t)}
-              onDelete={handleDeleteTask}
-            />
-          ))}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onRequestJoin={handleRequestJoinTask}
+                onRequestDone={handleRequestDoneTask}
+                onConfirmDone={handleConfirmDoneTask}
+                onRejectDone={handleRejectDoneTask}
+                onManageAffiliations={(t) => setAffiliationModalTask(t)}
+                onDelete={handleDeleteTask}
+                isJoining={isJoiningTaskId === task.id}
+              />
+            ))}
+          </div>
+
+          <Pagination
+            currentPage={taskPage}
+            totalPages={taskTotalPages}
+            totalElements={taskTotalElements}
+            pageSize={10}
+            onPageChange={(p) => fetchTasksPage(p)}
+            itemName="tâches"
+            disabled={isTasksLoading}
+          />
         </div>
       )}
 
