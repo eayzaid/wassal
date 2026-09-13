@@ -16,12 +16,15 @@ import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
 import { MemberDirectoryPage } from '../pages/admin/MemberDirectoryPage';
 import { PendingApprovalsPage } from '../pages/admin/PendingApprovalsPage';
 import { ProfilePage } from '../pages/profile/ProfilePage';
+import { ProjectsListPage } from '../pages/projects/ProjectsListPage';
+import { ProjectDetailPage } from '../pages/projects/ProjectDetailPage';
+import { TasksListPage } from '../pages/tasks/TasksListPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
 const RootRedirect: React.FC = () => {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return <Navigate to={isAdmin ? '/admin/members' : '/profile'} replace />;
+  return <Navigate to="/projects" replace />;
 };
 
 export const AppRoutes: React.FC = () => {
@@ -39,6 +42,9 @@ export const AppRoutes: React.FC = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/" element={<RootRedirect />} />
+          <Route path="/projects" element={<ProjectsListPage />} />
+          <Route path="/projects/:id" element={<ProjectDetailPage />} />
+          <Route path="/tasks" element={<TasksListPage />} />
           <Route path="/profile" element={<ProfilePage />} />
 
           {/* Admin routes */}

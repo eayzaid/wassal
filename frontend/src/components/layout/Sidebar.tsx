@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { RoleBadge } from '../common/RoleBadge';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Button } from '../ui/button';
+import { PresidentDangerZoneModal } from '../admin/PresidentDangerZoneModal';
 import {
   Users,
   UserCheck,
   User,
   LogOut,
   X,
+  FolderKanban,
+  ListTodo,
+  Flame,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -20,6 +24,9 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const [isDangerZoneOpen, setIsDangerZoneOpen] = useState(false);
+
+  const isPresident = user?.role === 'PRESIDENT';
 
   const handleLogout = async () => {
     await logout();
@@ -97,9 +104,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
         {/* Navigation links */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
+          <div className="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-wassal-sage">
+            Activités & Missions
+          </div>
+          <NavLink to="/projects" className={navItemClasses} onClick={onClose}>
+            <FolderKanban className="w-4 h-4 text-wassal-green" />
+            <span>Projets & Initiatives</span>
+          </NavLink>
+          <NavLink to="/tasks" className={navItemClasses} onClick={onClose}>
+            <ListTodo className="w-4 h-4 text-wassal-sage" />
+            <span>Tâches & Collectes</span>
+          </NavLink>
+
           {isAdmin && (
             <>
-              <div className="px-3 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-wassal-sage">
+              <div className="px-3 pt-4 pb-1 text-[11px] font-bold uppercase tracking-wider text-wassal-sage">
                 Administration
               </div>
               <NavLink to="/admin/members" className={navItemClasses} onClick={onClose}>
@@ -120,6 +139,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <User className="w-4 h-4 text-wassal-sage" />
             <span>Mon Profil & Sécurité</span>
           </NavLink>
+
+          {/* President Only: Danger Zone Handover */}
+          {isPresident && (
+            <>
+              <div className="px-3 pt-4 pb-1 text-[11px] font-bold uppercase tracking-wider text-rose-300">
+                Gouvernance
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDangerZoneOpen(true);
+                  onClose();
+                }}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold text-rose-300 hover:text-white hover:bg-rose-900/40 border border-rose-800/40 transition-colors"
+              >
+                <Flame className="w-4 h-4 text-rose-400" />
+                <span>Passation Présidence</span>
+              </button>
+            </>
+          )}
         </nav>
 
         {/* Bottom logout */}
@@ -134,6 +173,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </Button>
         </div>
       </aside>
+
+      {/* President Danger Zone Modal */}
+      {isPresident && (
+        <PresidentDangerZoneModal
+          isOpen={isDangerZoneOpen}
+          onClose={() => setIsDangerZoneOpen(false)}
+        />
+      )}
     </>
   );
 };
