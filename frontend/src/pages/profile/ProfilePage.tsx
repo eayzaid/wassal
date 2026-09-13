@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { profileApi } from '../../api/profileApi';
@@ -26,11 +27,15 @@ import {
   Save,
   KeyRound,
   AlertCircle,
+  LogOut,
 } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
-  const { user, setUser } = useAuth();
+  const { user, setUser, logout } = useAuth();
+  const navigate = useNavigate();
   const toast = useToast();
+
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Profile Edit State
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -45,6 +50,18 @@ export const ProfilePage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login');
+    } catch {
+      toast.error('Erreur lors de la déconnexion');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,6 +191,21 @@ export const ProfilePage: React.FC = () => {
                     Caravane El Hayat
                   </span>
                 </div>
+              </div>
+
+              {/* Mobile Logout Action (Visible on mobile/tablet when sidebar is collapsed) */}
+              <div className="mt-5 pt-4 border-t border-wassal-border lg:hidden">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  isLoading={isLoggingOut}
+                  onClick={handleLogout}
+                  className="w-full text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 h-11 gap-2 text-xs font-semibold shadow-2xs"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Se déconnecter</span>
+                </Button>
               </div>
             </CardContent>
           </Card>
