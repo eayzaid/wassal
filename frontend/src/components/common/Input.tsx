@@ -1,5 +1,6 @@
 import React, { forwardRef, InputHTMLAttributes } from 'react';
 import { Input as ShadcnInput } from '../ui/input';
+import { AlertCircle } from 'lucide-react';
 
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
@@ -43,7 +44,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
         </div>
-        {error && <p className="mt-1 text-xs text-wassal-wine font-medium">{error}</p>}
+        {error && (
+          <p className="mt-1.5 text-xs text-wassal-wine font-medium flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <span>{error}</span>
+          </p>
+        )}
         {helperText && !error && (
           <p className="mt-1 text-xs text-wassal-slate">{helperText}</p>
         )}

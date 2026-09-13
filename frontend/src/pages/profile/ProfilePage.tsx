@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { formatDate } from '../../utils/formatters';
 import { isValidPassword, isValidPhoneNumber } from '../../utils/validation';
+import { PasswordRequirements } from '../../components/common/PasswordRequirements';
 import { AxiosError } from 'axios';
 import { ErrorResponse } from '../../types';
 import {
@@ -28,7 +29,7 @@ import {
 } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
-  const { user, refreshUser } = useAuth();
+  const { user, setUser } = useAuth();
   const toast = useToast();
 
   // Profile Edit State
@@ -61,12 +62,12 @@ export const ProfilePage: React.FC = () => {
 
     setIsUpdatingProfile(true);
     try {
-      await profileApi.updateProfile({
+      const updated = await profileApi.updateProfile({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         phoneNumber: phoneNumber.trim(),
       });
-      await refreshUser();
+      setUser(updated);
       toast.success('Profil mis à jour avec succès.');
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
@@ -288,26 +289,28 @@ export const ProfilePage: React.FC = () => {
                       leftIcon={<Lock className="w-4 h-4" />}
                     />
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Input
-                        label="Nouveau mot de passe"
-                        type="password"
-                        required
-                        placeholder="••••••••"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        helperText="Min. 8 car., majuscule, chiffre, symbole"
-                        leftIcon={<Lock className="w-4 h-4" />}
-                      />
-                      <Input
-                        label="Confirmer le nouveau mot de passe"
-                        type="password"
-                        required
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        leftIcon={<Lock className="w-4 h-4" />}
-                      />
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Input
+                          label="Nouveau mot de passe"
+                          type="password"
+                          required
+                          placeholder="••••••••"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          leftIcon={<Lock className="w-4 h-4" />}
+                        />
+                        <Input
+                          label="Confirmer le nouveau mot de passe"
+                          type="password"
+                          required
+                          placeholder="••••••••"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          leftIcon={<Lock className="w-4 h-4" />}
+                        />
+                      </div>
+                      <PasswordRequirements password={newPassword} />
                     </div>
 
                     <div className="flex justify-end pt-2">

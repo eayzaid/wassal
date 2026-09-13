@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Badge } from '../../components/ui/badge';
 import { isValidEmail, isValidPhoneNumber, isValidPassword } from '../../utils/validation';
+import { PasswordRequirements } from '../../components/common/PasswordRequirements';
 import { AxiosError } from 'axios';
 import { ErrorResponse } from '../../types';
 import {
@@ -204,17 +205,24 @@ export const RegisterPage: React.FC = () => {
                 leftIcon={<Phone className="w-4 h-4" />}
               />
 
-              <Input
-                label="Mot de passe"
-                type="password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                error={fieldErrors.password}
-                helperText="Min. 8 car., 1 majuscule, 1 chiffre, 1 symbole"
-                leftIcon={<Lock className="w-4 h-4" />}
-              />
+              <div className="space-y-2">
+                <Input
+                  label="Mot de passe"
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) {
+                      setFieldErrors((prev) => ({ ...prev, password: '' }));
+                    }
+                  }}
+                  error={fieldErrors.password}
+                  leftIcon={<Lock className="w-4 h-4" />}
+                />
+                <PasswordRequirements password={password} />
+              </div>
 
               <Input
                 label="Confirmer le mot de passe"

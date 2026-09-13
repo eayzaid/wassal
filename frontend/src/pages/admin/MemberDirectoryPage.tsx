@@ -125,10 +125,21 @@ export const MemberDirectoryPage: React.FC = () => {
     try {
       const updated = await usersApi.approveUser(id);
       toast.success(`Inscription approuvée pour ${updated.firstName} ${updated.lastName}`);
-      handleRefresh();
+      const prevMember = members.find((m) => m.id === id);
+      setMembers((prev) => prev.map((m) => (m.id === id ? updated : m)));
       if (selectedMember?.id === id) {
         setSelectedMember(updated);
       }
+      setCounts((prev) => {
+        const wasPending = prevMember?.accountStatus === 'PENDING_APPROVAL';
+        const wasRejected = prevMember?.accountStatus === 'REJECTED';
+        return {
+          ...prev,
+          pending: wasPending ? Math.max(0, prev.pending - 1) : prev.pending,
+          rejected: wasRejected ? Math.max(0, prev.rejected - 1) : prev.rejected,
+          approved: prev.approved + 1,
+        };
+      });
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
       toast.error(error.response?.data?.message || "Échec de l'approbation du membre");
@@ -139,10 +150,21 @@ export const MemberDirectoryPage: React.FC = () => {
     try {
       const updated = await usersApi.rejectUser(id);
       toast.info(`Inscription refusée pour ${updated.firstName} ${updated.lastName}`);
-      handleRefresh();
+      const prevMember = members.find((m) => m.id === id);
+      setMembers((prev) => prev.map((m) => (m.id === id ? updated : m)));
       if (selectedMember?.id === id) {
         setSelectedMember(updated);
       }
+      setCounts((prev) => {
+        const wasPending = prevMember?.accountStatus === 'PENDING_APPROVAL';
+        const wasApproved = prevMember?.accountStatus === 'APPROVED';
+        return {
+          ...prev,
+          pending: wasPending ? Math.max(0, prev.pending - 1) : prev.pending,
+          approved: wasApproved ? Math.max(0, prev.approved - 1) : prev.approved,
+          rejected: prev.rejected + 1,
+        };
+      });
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
       toast.error(error.response?.data?.message || 'Échec du refus du membre');
@@ -153,7 +175,7 @@ export const MemberDirectoryPage: React.FC = () => {
     try {
       const updated = await usersApi.changeRole(id, { role: newRole });
       toast.success(`Rôle mis à jour pour ${updated.firstName} ${updated.lastName}`);
-      handleRefresh();
+      setMembers((prev) => prev.map((m) => (m.id === id ? updated : m)));
       if (selectedMember?.id === id) {
         setSelectedMember(updated);
       }
@@ -168,10 +190,19 @@ export const MemberDirectoryPage: React.FC = () => {
     try {
       const updated = await usersApi.blockUser(id);
       toast.warning(`Compte suspendu pour ${updated.firstName} ${updated.lastName}`);
-      handleRefresh();
+      const prevMember = members.find((m) => m.id === id);
+      setMembers((prev) => prev.map((m) => (m.id === id ? updated : m)));
       if (selectedMember?.id === id) {
         setSelectedMember(updated);
       }
+      setCounts((prev) => {
+        const wasApproved = prevMember?.accountStatus === 'APPROVED';
+        return {
+          ...prev,
+          blocked: prev.blocked + 1,
+          approved: wasApproved ? Math.max(0, prev.approved - 1) : prev.approved,
+        };
+      });
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
       toast.error(error.response?.data?.message || 'Échec de la suspension du compte');
@@ -182,10 +213,19 @@ export const MemberDirectoryPage: React.FC = () => {
     try {
       const updated = await usersApi.unblockUser(id);
       toast.success(`Accès rétabli pour ${updated.firstName} ${updated.lastName}`);
-      handleRefresh();
+      const prevMember = members.find((m) => m.id === id);
+      setMembers((prev) => prev.map((m) => (m.id === id ? updated : m)));
       if (selectedMember?.id === id) {
         setSelectedMember(updated);
       }
+      setCounts((prev) => {
+        const isApproved = prevMember?.accountStatus === 'APPROVED';
+        return {
+          ...prev,
+          blocked: Math.max(0, prev.blocked - 1),
+          approved: isApproved ? prev.approved + 1 : prev.approved,
+        };
+      });
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
       toast.error(error.response?.data?.message || "Échec du déblocage de l'accès");

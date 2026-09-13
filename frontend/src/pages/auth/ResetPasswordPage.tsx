@@ -6,6 +6,7 @@ import { Input } from '../../components/common/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { isValidPassword } from '../../utils/validation';
+import { PasswordRequirements } from '../../components/common/PasswordRequirements';
 import { AxiosError } from 'axios';
 import { ErrorResponse } from '../../types';
 import { Lock, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
@@ -135,16 +136,21 @@ export const ResetPasswordPage: React.FC = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                  label="Nouveau mot de passe"
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  helperText="Min. 8 car., 1 majuscule, 1 chiffre, 1 symbole"
-                  leftIcon={<Lock className="w-4 h-4" />}
-                />
+                <div className="space-y-2">
+                  <Input
+                    label="Nouveau mot de passe"
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      if (errorMsg) setErrorMsg(null);
+                    }}
+                    leftIcon={<Lock className="w-4 h-4" />}
+                  />
+                  <PasswordRequirements password={newPassword} />
+                </div>
 
                 <Input
                   label="Confirmer le nouveau mot de passe"

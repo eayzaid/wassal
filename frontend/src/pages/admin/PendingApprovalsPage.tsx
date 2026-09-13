@@ -69,7 +69,7 @@ export const PendingApprovalsPage: React.FC = () => {
         try {
           await usersApi.approveUser(user.id);
           toast.success(`Compte validé pour ${user.firstName} ${user.lastName}`);
-          fetchPendingUsers();
+          setPendingUsers((prev) => prev.filter((u) => u.id !== user.id));
         } catch (err) {
           const error = err as AxiosError<ErrorResponse>;
           toast.error(error.response?.data?.message || 'Erreur lors de la validation.');
@@ -88,7 +88,7 @@ export const PendingApprovalsPage: React.FC = () => {
         try {
           await usersApi.rejectUser(user.id);
           toast.info(`Demande refusée pour ${user.firstName} ${user.lastName}`);
-          fetchPendingUsers();
+          setPendingUsers((prev) => prev.filter((u) => u.id !== user.id));
         } catch (err) {
           const error = err as AxiosError<ErrorResponse>;
           toast.error(error.response?.data?.message || 'Erreur lors du refus.');
