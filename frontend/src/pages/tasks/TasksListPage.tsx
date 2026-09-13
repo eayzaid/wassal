@@ -127,10 +127,9 @@ export const TasksListPage: React.FC = () => {
   // Fetch counts for tabs
   const fetchCounts = useCallback(async () => {
     try {
-      const [allRes, pendingRes, doneRes, allTasksRes] = await Promise.allSettled([
+      const [allRes, pendingRes, allTasksRes] = await Promise.allSettled([
         tasksApi.listTasks({ size: 1 }),
         tasksApi.listTasks({ status: 'PENDING_CONFIRMATION', size: 1 }),
-        tasksApi.listTasks({ status: 'DONE', size: 1 }),
         tasksApi.listTasks({ size: 100 }),
       ]);
 
@@ -142,16 +141,14 @@ export const TasksListPage: React.FC = () => {
         pendingRes.status === 'fulfilled'
           ? (pendingRes.value as any).page?.totalElements ?? (pendingRes.value as any).totalElements ?? 0
           : 0;
-      const doneCount =
-        doneRes.status === 'fulfilled'
-          ? (doneRes.value as any).page?.totalElements ?? (doneRes.value as any).totalElements ?? 0
-          : 0;
 
       let myTasksCount = 0;
+      let doneCount = 0;
       if (allTasksRes.status === 'fulfilled') {
         const resVal: any = allTasksRes.value;
         const items: TaskDto[] = resVal.content || (Array.isArray(resVal) ? resVal : []);
         myTasksCount = items.filter((t) => isAffiliatedWithTask(user?.id, t)).length;
+        doneCount = items.filter((t) => t.status === 'DONE' && isAffiliatedWithTask(user?.id, t)).length;
       }
 
       setCounts({
@@ -187,7 +184,8 @@ export const TasksListPage: React.FC = () => {
       const isClientFiltered = Boolean(
         debouncedSearch ||
         typeFilter !== 'ALL' ||
-        currentTab === 'MY_TASKS'
+        currentTab === 'MY_TASKS' ||
+        currentTab === 'DONE'
       );
 
       const backendStatus =
@@ -215,6 +213,8 @@ export const TasksListPage: React.FC = () => {
           let matchesTab = true;
           if (currentTab === 'MY_TASKS') {
             matchesTab = isAffiliatedWithTask(user?.id, t);
+          } else if (currentTab === 'DONE') {
+            matchesTab = t.status === 'DONE' && isAffiliatedWithTask(user?.id, t);
           }
 
           const matchesType = typeFilter === 'ALL' || t.type === typeFilter;
@@ -550,7 +550,9 @@ export const TasksListPage: React.FC = () => {
           </div>
           <h3 className="text-base font-bold text-wassal-plum">Aucune tâche trouvée</h3>
           <p className="text-xs text-wassal-slate mt-1 max-w-xs mx-auto">
-            {searchQuery || typeFilter !== 'ALL' || selectedProjectId !== 'ALL' || currentTab !== 'ALL'
+            {currentTab === 'DONE'
+              ? 'Aucune tâche achevée à laquelle vous avez participé.'
+              : searchQuery || typeFilter !== 'ALL' || selectedProjectId !== 'ALL' || currentTab !== 'ALL'
               ? 'Aucune tâche ne correspond aux filtres sélectionnés.'
               : 'Aucune tâche disponible dans le système.'}
           </p>

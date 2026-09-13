@@ -9,6 +9,8 @@ import {
 import { tasksApi } from '../../api/tasksApi';
 import { usersApi } from '../../api/usersApi';
 import { useToast } from '../../hooks/useToast';
+import { useAuth } from '../../hooks/useAuth';
+import { canManageTask } from '../../utils/projectPermissions';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -50,7 +52,9 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
   task,
   onTaskUpdated,
 }) => {
+  const { user } = useAuth();
   const toast = useToast();
+  const canManage = canManageTask(user, task);
   const [activeTab, setActiveTab] = useState<'members' | 'requests' | 'assign'>('members');
 
   // Active members
@@ -112,14 +116,16 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
   useEffect(() => {
     if (isOpen && taskId) {
       fetchActiveMembers();
-      fetchRequests();
+      if (canManage) {
+        fetchRequests();
+      }
       // Reset search on modal open
       setUserSearch('');
       setSearchedUsers([]);
       setIsDebouncing(false);
       setIsLoadingUsers(false);
     }
-  }, [isOpen, taskId, fetchActiveMembers, fetchRequests]);
+  }, [isOpen, taskId, canManage, fetchActiveMembers, fetchRequests]);
 
   const performUserSearch = useCallback(
     async (query: string) => {
@@ -313,7 +319,9 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="text-base sm:text-lg">Gestion des Bénévoles</DialogTitle>
+              <DialogTitle className="text-base sm:text-lg">
+                {canManage ? 'Gestion des Bénévoles' : 'Équipe de la Mission'}
+              </DialogTitle>
               <DialogDescription className="text-xs truncate max-w-sm sm:max-w-md">
                 Mission : <span className="font-semibold text-wassal-plum">{task.name}</span>
               </DialogDescription>
@@ -330,11 +338,67 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
           </Alert>
         )}
 
-        <Tabs
-          value={activeTab}
-          onValueChange={(val) => setActiveTab(val as 'members' | 'requests' | 'assign')}
-          className="flex-1 flex flex-col min-h-0 pt-2"
-        >
+        {!canManage ? (
+          /* Non-management / Member View: Équipe only, no tabs, no action buttons */
+          <div className="flex-1 flex flex-col min-h-0 pt-2">
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <Users className="w-4 h-4 text-wassal-plum" />
+              <span className="text-xs font-bold text-wassal-plum">
+                Membres de l'équipe ({activeMembers.length})
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              {isLoadingMembers ? (
+                <div className="py-12 text-center text-xs text-wassal-slate">
+                  Chargement des membres de l'équipe...
+                </div>
+              ) : activeMembers.length === 0 ? (
+                <div className="py-12 text-center text-wassal-slate space-y-2">
+                  <Users className="w-8 h-8 mx-auto text-wassal-slate/40" />
+                  <p className="text-xs">Aucun membre dans l'équipe pour le moment.</p>
+                </div>
+              ) : (
+                activeMembers.map((m) => (
+                  <div
+                    key={m.id}
+                    className="p-3 rounded-xl border border-wassal-border bg-wassal-surface flex items-center justify-between gap-3 shadow-2xs"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar className="w-9 h-9 shrink-0 border border-wassal-border">
+                        <AvatarFallback className="text-xs bg-wassal-plum text-white font-semibold">
+                          {m.firstName?.[0]}
+                          {m.lastName?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-wassal-plum truncate">
+                          {m.firstName} {m.lastName}
+                        </p>
+                        <p className="text-[11px] text-wassal-slate truncate">{m.email}</p>
+                        <p className="text-[10px] text-wassal-slate/70 mt-0.5">
+                          Affecté(e) le {formatDate(m.affiliatedAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {m.pointsAwarded !== null && (
+                      <div className="shrink-0">
+                        <Badge className="bg-emerald-50 text-wassal-green-ink border-wassal-green-ink/30 text-[11px] font-bold">
+                          +{m.pointsAwarded} pts
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ) : (
+          <Tabs
+            value={activeTab}
+            onValueChange={(val) => setActiveTab(val as 'members' | 'requests' | 'assign')}
+            className="flex-1 flex flex-col min-h-0 pt-2"
+          >
           <TabsList className="grid grid-cols-3 mb-3 shrink-0 h-11 sm:h-10">
             <TabsTrigger value="members" className="gap-1.5 text-xs py-2">
               <Users className="w-3.5 h-3.5" />
@@ -582,7 +646,8 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
             </div>
           </TabsContent>
         </Tabs>
-      </DialogContent>
+      )}
+    </DialogContent>
     </Dialog>
   );
 };

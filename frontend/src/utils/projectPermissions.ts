@@ -1,16 +1,19 @@
 import { Role, UserSummaryDto, ProjectDto, TaskDto } from '../types';
-import { isAdminTier } from './permissions';
+
+export const isProjectAdmin = (role?: Role): boolean => {
+  // Only President and Vice-President are executive project administrators.
+  // RH is strictly limited to User Management (HR) and does NOT have project admin rights.
+  return role === 'PRESIDENT' || role === 'VICE_PRESIDENT';
+};
 
 export const canCreateProject = (role?: Role): boolean => {
   // Only President, Vice-President, and Team Leader can create projects.
-  // RH is strictly limited to User Management (HR).
-  return role === 'PRESIDENT' || role === 'VICE_PRESIDENT' || role === 'TEAM_LEADER';
+  return isProjectAdmin(role) || role === 'TEAM_LEADER';
 };
 
 export const canCreateTask = (role?: Role): boolean => {
   // Only President, Vice-President, and Team Leader can create tasks.
-  // RH is strictly limited to User Management (HR).
-  return role === 'PRESIDENT' || role === 'VICE_PRESIDENT' || role === 'TEAM_LEADER';
+  return isProjectAdmin(role) || role === 'TEAM_LEADER';
 };
 
 export const canManageProject = (
@@ -18,7 +21,8 @@ export const canManageProject = (
   project: ProjectDto | null
 ): boolean => {
   if (!user || !project) return false;
-  return isAdminTier(user.role) || project.ownerId === user.id;
+  if (user.role === 'MEMBER' || user.role === 'RH') return false;
+  return isProjectAdmin(user.role) || (user.role === 'TEAM_LEADER' && project.ownerId === user.id);
 };
 
 export const canManageTask = (
@@ -26,7 +30,9 @@ export const canManageTask = (
   task: TaskDto | null
 ): boolean => {
   if (!user || !task) return false;
-  return isAdminTier(user.role) || task.ownerId === user.id;
+  // A regular member or RH can NEVER manage tasks
+  if (user.role === 'MEMBER' || user.role === 'RH') return false;
+  return isProjectAdmin(user.role) || (user.role === 'TEAM_LEADER' && task.ownerId === user.id);
 };
 
 export const canViewPoints = (
@@ -34,15 +40,17 @@ export const canViewPoints = (
   taskOrProject: { ownerId: number } | null
 ): boolean => {
   if (!user || !taskOrProject) return false;
-  return isAdminTier(user.role) || taskOrProject.ownerId === user.id;
+  return isProjectAdmin(user.role) || taskOrProject.ownerId === user.id;
 };
 
 export const isAffiliatedWithTask = (
   userId: number | undefined,
   task: TaskDto | null
 ): boolean => {
-  if (!userId || !task) return false;
-  return task.activeMembers.some((member) => member.userId === userId);
+  if (!userId || !task || !task.activeMembers) return false;
+  return task.activeMembers.some(
+    (member) => member.userId === userId || member.id === userId
+  );
 };
 
 export const canRequestDone = (
@@ -59,7 +67,8 @@ export const canConfirmDone = (
   task: TaskDto | null
 ): boolean => {
   if (!user || !task) return false;
-  if (task.status !== 'PENDING_CONFIRMATION' && task.status !== 'PENDING') return false;
+  // A task can ONLY be confirmed/rejected when it is in PENDING_CONFIRMATION status!
+  if (task.status !== 'PENDING_CONFIRMATION') return false;
   return canManageTask(user, task);
 };
 

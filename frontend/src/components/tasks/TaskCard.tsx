@@ -207,8 +207,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             </div>
           )}
 
-          {/* 4. Owner/Admin: Manage Affiliations */}
-          {isOwnerOrAdmin && onManageAffiliations && (
+          {/* 4. Affiliations / Team view */}
+          {onManageAffiliations && (
             <Button
               variant="outline"
               size="sm"
@@ -216,7 +216,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               className="flex-1 h-9 text-xs font-semibold text-wassal-plum border-wassal-border hover:bg-wassal-bg gap-1.5"
             >
               <Users className="w-3.5 h-3.5 text-wassal-slate" />
-              <span>Membres ({memberCount})</span>
+              <span>{isOwnerOrAdmin ? `Membres (${memberCount})` : `Équipe (${memberCount})`}</span>
             </Button>
           )}
 
