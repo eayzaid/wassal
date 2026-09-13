@@ -161,6 +161,7 @@ sequenceDiagram
 | **BR-11** | Self-Service Scope | User can only update `firstName`, `lastName`, and `phoneNumber`. `email`, `role`, and `status` are read-only. |
 | **BR-12** | Password Reset Limit | 6-digit code expires in 10 minutes and is invalidated after 5 failed attempts. |
 | **BR-13** | RH Assignment Limit | `RH` **cannot** assign `PRESIDENT`, `VICE_PRESIDENT`, or `RH` roles. Filter out these options from role dropdown if actor is `RH`. |
+| **BR-14** | Single President & Mandatory Handover | Only the active `PRESIDENT` can assign the `PRESIDENT` role to an active member. Because **only one president is allowed in the whole application**, this action automatically strips the current president of their title, demoting them to `MEMBER`. Non-presidents attempting to assign `PRESIDENT` receive 403 `INSUFFICIENT_PRIVILEGE`. |
 
 ---
 
@@ -303,12 +304,13 @@ Paginated search & filtering directory.
 - **Success Response:** `200 OK` with updated `UserSummaryDto`.
 
 #### `PATCH /api/admin/users/{id}/role`
-- **Request Body:** `{ "role": "TEAM_LEADER" }`
+- **Request Body:** `{ "role": "PRESIDENT" }`
 - **Constraints:**
   - Cannot change self-role (BR-8).
   - Target `PRESIDENT` or `VICE_PRESIDENT` $\rightarrow$ Actor must be `PRESIDENT` (BR-9).
   - Actor `RH` cannot assign `PRESIDENT`, `VICE_PRESIDENT`, or `RH` (BR-13).
   - Setting `TEAM_LEADER` requires target's current role to be `MEMBER` (BR-6).
+  - **Single President Rule (BR-14):** Setting `PRESIDENT` requires actor to be `PRESIDENT` and target to be an approved, unblocked user. This action **strips the current president of their role** (demotes them to `MEMBER`), ensuring strictly one President exists across the entire application.
 - **Success Response:** `200 OK` with updated `UserSummaryDto`.
 
 #### `PATCH /api/admin/users/{id}/block`
