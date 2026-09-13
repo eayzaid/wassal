@@ -27,6 +27,7 @@ import {
   RefreshCw,
   Trophy,
   AlertCircle,
+  User,
 } from 'lucide-react';
 
 export const ProjectDetailPage: React.FC = () => {
@@ -340,6 +341,14 @@ export const ProjectDetailPage: React.FC = () => {
             </p>
 
             <div className="flex items-center gap-6 text-xs text-wassal-slate pt-2 flex-wrap">
+              {(project.ownerName || project.createdBy) && (
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-wassal-plum" />
+                  <span>
+                    Créé par : <strong>{project.ownerName || project.createdBy}</strong>
+                  </span>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-wassal-plum" />
                 <span>

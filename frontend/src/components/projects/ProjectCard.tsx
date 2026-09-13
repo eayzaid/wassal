@@ -11,6 +11,7 @@ import {
   Trophy,
   ArrowRight,
   PlusCircle,
+  User,
 } from 'lucide-react';
 
 interface ProjectCardProps {
@@ -111,6 +112,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               />
             </div>
           </div>
+
+          {/* Creator */}
+          {(project.ownerName || project.createdBy) && (
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-wassal-slate flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-wassal-slate" />
+                <span>Créé par :</span>
+              </span>
+              <span className="font-semibold text-wassal-plum truncate max-w-[160px]">
+                {project.ownerName || project.createdBy}
+              </span>
+            </div>
+          )}
 
           {/* End Date */}
           <div className="flex items-center justify-between text-[11px]">

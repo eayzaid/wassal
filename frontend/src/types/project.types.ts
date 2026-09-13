@@ -13,6 +13,8 @@ export interface ProjectPublicDto {
   expectedEndTime: string;
   createdAt: string;
   ownerId: number;
+  ownerName?: string;
+  createdBy?: string;
   status: ProjectStatus;
   editionNumber: number;
   tasks: TaskPublicDto[];
@@ -47,6 +49,8 @@ export interface TaskPublicDto {
   id: number;
   projectId: number | null;
   ownerId: number;
+  ownerName?: string;
+  createdBy?: string;
   type: TaskType;
   name: string;
   description: string;

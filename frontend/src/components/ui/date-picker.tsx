@@ -6,6 +6,13 @@ import { cn } from '../../lib/utils';
 import { Button } from './button';
 import { Calendar } from './calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './select';
 
 interface DatePickerProps {
   value?: string; // ISO string e.g. "2026-10-15T18:00" or "2026-10-15"
@@ -84,8 +91,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     }
   };
 
-  const handleTimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newTime = e.target.value;
+  const handleTimeChange = (newTime: string) => {
     setTime(newTime);
     if (selectedDate) {
       emitChange(selectedDate, newTime);
@@ -176,17 +182,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 <span>Heure :</span>
               </span>
 
-              <select
-                value={time}
-                onChange={handleTimeChange}
-                className="h-8 px-2.5 text-xs rounded-lg border border-wassal-border bg-white text-wassal-plum font-semibold focus:outline-none focus:ring-1 focus:ring-wassal-green"
-              >
-                {timeOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
+              <Select value={time} onValueChange={handleTimeChange}>
+                <SelectTrigger className="h-8 w-28 text-xs bg-white text-wassal-plum font-semibold border-wassal-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-48">
+                  {timeOptions.map((opt) => (
+                    <SelectItem key={opt} value={opt} className="text-xs">
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Button
                 type="button"

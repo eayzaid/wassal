@@ -12,6 +12,13 @@ import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { Pagination } from '../../components/common/Pagination';
 import { Button } from '../../components/ui/button';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
+import {
   ListTodo,
   Plus,
   Search,
@@ -493,35 +500,41 @@ export const TasksListPage: React.FC = () => {
 
           {/* Type Filter */}
           <div className="sm:col-span-3">
-            <select
+            <Select
               value={typeFilter}
-              onChange={(e) => handleTypeChange(e.target.value as any)}
-              className="w-full h-10 px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum focus:outline-none focus:ring-2 focus:ring-wassal-green font-medium"
+              onValueChange={(val) => handleTypeChange(val as 'ALL' | TaskType)}
             >
-              <option value="ALL">Tous types de tâche</option>
-              <option value="TASK">Tâches opérationnelles</option>
-              <option value="COLLECTION">Campagnes de collecte</option>
-            </select>
+              <SelectTrigger className="w-full h-10 px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green">
+                <SelectValue placeholder="Tous types de tâche" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Tous types de tâche</SelectItem>
+                <SelectItem value="TASK">Tâches opérationnelles</SelectItem>
+                <SelectItem value="COLLECTION">Campagnes de collecte</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Project Filter */}
           <div className="sm:col-span-3">
-            <select
-              value={selectedProjectId}
-              onChange={(e) =>
-                handleProjectChange(
-                  e.target.value === 'ALL' ? 'ALL' : Number(e.target.value)
-                )
+            <Select
+              value={String(selectedProjectId)}
+              onValueChange={(val) =>
+                handleProjectChange(val === 'ALL' ? 'ALL' : Number(val))
               }
-              className="w-full h-10 px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum focus:outline-none focus:ring-2 focus:ring-wassal-green font-medium"
             >
-              <option value="ALL">Tous les projets</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full h-10 px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green">
+                <SelectValue placeholder="Tous les projets" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Tous les projets</SelectItem>
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={String(p.id)}>
+                    {p.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

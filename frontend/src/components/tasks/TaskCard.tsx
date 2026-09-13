@@ -22,6 +22,7 @@ import {
   Trash2,
   Clock,
   Briefcase,
+  User,
 } from 'lucide-react';
 
 interface TaskCardProps {
@@ -109,17 +110,27 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Metadata info row */}
-        <div className="flex items-center justify-between text-xs text-wassal-slate pt-2 border-t border-wassal-border/50">
+        <div className="flex items-center justify-between gap-2 text-xs text-wassal-slate pt-2 border-t border-wassal-border/50 flex-wrap">
           <span className="flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-wassal-slate" />
+            <Users className="w-3.5 h-3.5 text-wassal-slate shrink-0" />
             <span>
               {memberCount} / {task.minRequiredMembers} membre{memberCount > 1 ? 's' : ''}
             </span>
           </span>
 
+          {(task.ownerName || task.createdBy) && (
+            <span
+              className="flex items-center gap-1 text-wassal-slate truncate max-w-[150px]"
+              title={`Créée par ${task.ownerName || task.createdBy}`}
+            >
+              <User className="w-3.5 h-3.5 text-wassal-slate shrink-0" />
+              <span className="truncate">Par {task.ownerName || task.createdBy}</span>
+            </span>
+          )}
+
           <span className="flex items-center gap-1 text-wassal-slate">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Créée le {formattedDate}</span>
+            <Calendar className="w-3.5 h-3.5 shrink-0" />
+            <span>{formattedDate}</span>
           </span>
         </div>
       </div>
