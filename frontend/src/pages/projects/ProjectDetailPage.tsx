@@ -154,6 +154,9 @@ export const ProjectDetailPage: React.FC = () => {
           }
         : prev
     );
+    setAffiliationModalTask((current) =>
+      current && current.id === updatedTask.id ? updatedTask : current
+    );
   };
 
   const handleRequestJoinTask = async (task: TaskDto) => {

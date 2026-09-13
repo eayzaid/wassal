@@ -82,6 +82,9 @@ export const TasksListPage: React.FC = () => {
 
   const handleTaskUpdated = (updatedTask: TaskDto) => {
     setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+    setAffiliationModalTask((current) =>
+      current && current.id === updatedTask.id ? updatedTask : current
+    );
   };
 
   const handleRequestJoin = async (task: TaskDto) => {

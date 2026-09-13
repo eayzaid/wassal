@@ -77,9 +77,9 @@ export const tasksApi = {
     return response.data;
   },
 
-  unaffiliateMember: async (taskId: number, memberId: number): Promise<MessageResponse> => {
+  unaffiliateMember: async (taskId: number, userId: number): Promise<MessageResponse> => {
     const response = await apiClient.delete<MessageResponse>(
-      `/tasks/${taskId}/affiliations/${memberId}`
+      `/tasks/${taskId}/affiliations/${userId}`
     );
     return response.data;
   },

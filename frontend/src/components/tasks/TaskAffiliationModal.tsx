@@ -167,11 +167,12 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
   // Un-affiliate
   const handleUnaffiliate = async (member: TaskMemberDto) => {
     if (isTaskDone) return;
+    const targetUserId = member.userId ?? member.id;
     setActionLoadingId(`unaff-${member.id}`);
     try {
-      await tasksApi.unaffiliateMember(task.id, member.id);
+      await tasksApi.unaffiliateMember(task.id, targetUserId);
       toast.info(`${member.firstName} ${member.lastName} retiré(e) de la mission.`);
-      setActiveMembers((prev) => prev.filter((m) => m.id !== member.id));
+      setActiveMembers((prev) => prev.filter((m) => m.id !== member.id && m.userId !== targetUserId));
       const updated = await tasksApi.getTaskById(task.id);
       onTaskUpdated?.(updated);
     } catch (err) {
