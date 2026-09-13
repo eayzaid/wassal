@@ -130,15 +130,22 @@ public class AuthService {
     }
 
     @Transactional
-    public ResponseCookie logout(String rawRefreshToken) {
+    public ResponseCookie logout(String rawRefreshToken, Long userId) {
         if (rawRefreshToken != null && !rawRefreshToken.isBlank()) {
             String tokenHash = HashUtils.sha256(rawRefreshToken);
             refreshTokenRepository.findByTokenHash(tokenHash).ifPresent(token -> {
                 token.setRevoked(true);
                 refreshTokenRepository.save(token);
             });
+        } else if (userId != null) {
+            refreshTokenRepository.revokeAllByUserId(userId);
         }
         return createCookie("", 0);
+    }
+
+    @Transactional
+    public ResponseCookie logout(String rawRefreshToken) {
+        return logout(rawRefreshToken, null);
     }
 
     private AuthResult generateTokensAndCookie(User user) {
@@ -170,7 +177,7 @@ public class AuthService {
                 .httpOnly(true)
                 .secure(jwtTokenProvider.isCookieSecure())
                 .sameSite(jwtTokenProvider.getCookieSameSite())
-                .path("/api/auth")
+                .path("/api/auth/refresh")
                 .maxAge(maxAgeSeconds)
                 .build();
     }

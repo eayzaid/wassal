@@ -122,8 +122,9 @@ sequenceDiagram
 
 ### Refresh Tokens
 - **TTL:** 7 days.
-- **Delivery:** Sent **only as an HttpOnly cookie**:
-  `refreshToken=<opaque>; HttpOnly; Secure=<bool>; SameSite=Strict; Path=/api/auth; Max-Age=604800`
+- **Delivery:** Sent **only as an HttpOnly cookie** scoped specifically to the refresh endpoint:
+  `refreshToken=<opaque>; HttpOnly; Secure=<bool>; SameSite=Strict; Path=/api/auth/refresh; Max-Age=604800`
+  *Security guarantee:* Because the cookie path is strictly `/api/auth/refresh`, the browser sends this cookie **ONLY** during token refresh requests (`POST /api/auth/refresh`), preventing accidental exposure on all other API calls.
 - **Security:** The backend stores only `SHA-256(refreshToken)`. Raw token is never stored in DB.
 - **Rotation:** Calling `/api/auth/refresh` immediately revokes the old refresh token row and sets a new cookie.
 
@@ -204,7 +205,7 @@ sequenceDiagram
   ```
 - **Success Response:** `200 OK`
   - Body: `{ "accessToken": "eyJhbGciOiJIUzI1NiJ9..." }`
-  - Header: `Set-Cookie: refreshToken=...; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=604800`
+  - Header: `Set-Cookie: refreshToken=...; HttpOnly; SameSite=Strict; Path=/api/auth/refresh; Max-Age=604800`
 - **Errors:**
   - `401 INVALID_CREDENTIALS`
   - `403 ACCOUNT_PENDING_APPROVAL`
@@ -212,16 +213,17 @@ sequenceDiagram
   - `403 ACCOUNT_BLOCKED` (contains `contact` object)
 
 #### `POST /api/auth/refresh`
-- **Request:** Empty body. Browser automatically passes the `refreshToken` cookie.
+- **Request:** Empty body. Browser automatically passes the `refreshToken` cookie (scoped strictly to `Path=/api/auth/refresh`).
 - **Success Response:** `200 OK`
   - Body: `{ "accessToken": "..." }`
-  - Header: Rotated `Set-Cookie: refreshToken=...`
+  - Header: Rotated `Set-Cookie: refreshToken=...; Path=/api/auth/refresh; ...`
 - **Errors:** `400` or `401 INVALID_TOKEN`.
 
 #### `POST /api/auth/logout`
-- **Request:** Empty body (passes `refreshToken` cookie).
+- **Request:** Optional Bearer token or `refreshToken` cookie.
 - **Success Response:** `204 No Content`
-  - Header: `Set-Cookie: refreshToken=; Max-Age=0; Path=/api/auth`
+  - Header: `Set-Cookie: refreshToken=; Max-Age=0; Path=/api/auth/refresh`
+  - Revokes active refresh token(s) and clears cookie.
 
 #### `POST /api/auth/forgot-password`
 - **Request Body:** `{ "email": "user@example.com" }`

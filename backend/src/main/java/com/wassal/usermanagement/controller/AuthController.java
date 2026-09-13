@@ -19,6 +19,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.wassal.usermanagement.security.UserPrincipal;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -61,8 +63,10 @@ public class AuthController {
 
     @PostMapping("/logout")
     @Operation(summary = "Revoke active refresh token and clear cookie")
-    public ResponseEntity<Void> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
-        ResponseCookie clearCookie = authService.logout(refreshToken);
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        ResponseCookie clearCookie = authService.logout(refreshToken, principal != null ? principal.getId() : null);
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
                 .build();

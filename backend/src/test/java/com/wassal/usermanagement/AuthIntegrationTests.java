@@ -233,7 +233,7 @@ class AuthIntegrationTests {
                 .andExpect(header().exists("Set-Cookie"))
                 .andExpect(header().string("Set-Cookie", containsString("refreshToken=")))
                 .andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
-                .andExpect(header().string("Set-Cookie", containsString("Path=/api/auth")))
+                .andExpect(header().string("Set-Cookie", containsString("Path=/api/auth/refresh")))
                 .andReturn();
 
         Cookie refreshCookie = result.getResponse().getCookie("refreshToken");
@@ -276,6 +276,7 @@ class AuthIntegrationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken", notNullValue()))
                 .andExpect(header().exists("Set-Cookie"))
+                .andExpect(header().string("Set-Cookie", containsString("Path=/api/auth/refresh")))
                 .andReturn();
 
         Cookie newCookie = refreshResult.getResponse().getCookie("refreshToken");
@@ -316,9 +317,49 @@ class AuthIntegrationTests {
         mockMvc.perform(post("/api/auth/logout")
                         .cookie(refreshCookie))
                 .andExpect(status().isNoContent())
-                .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")));
+                .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")))
+                .andExpect(header().string("Set-Cookie", containsString("Path=/api/auth/refresh")));
 
         String hash = HashUtils.sha256(refreshCookie.getValue());
+        assertThat(refreshTokenRepository.findByTokenHash(hash).get().isRevoked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("FR-5: Logout with Bearer token only revokes tokens when browser does not send cookie to logout endpoint")
+    void testLogoutWithBearerTokenOnly() throws Exception {
+        userRepository.save(User.builder()
+                .firstName("Bearer")
+                .lastName("Logout")
+                .email("bearerlogout@example.com")
+                .phoneNumber("+212600000010")
+                .password(passwordEncoder.encode("ValidPassword123!"))
+                .role(Role.MEMBER)
+                .accountStatus(AccountStatus.APPROVED)
+                .blocked(false)
+                .build());
+
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest("bearerlogout@example.com", "ValidPassword123!"))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseBody = loginResult.getResponse().getContentAsString();
+        String accessToken = objectMapper.readTree(responseBody).get("accessToken").asText();
+
+        Cookie refreshCookie = loginResult.getResponse().getCookie("refreshToken");
+        assertThat(refreshCookie).isNotNull();
+        String hash = HashUtils.sha256(refreshCookie.getValue());
+        assertThat(refreshTokenRepository.findByTokenHash(hash).get().isRevoked()).isFalse();
+
+        // Browser sends logout request with Bearer token but WITHOUT refreshToken cookie (Path=/api/auth/refresh)
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")))
+                .andExpect(header().string("Set-Cookie", containsString("Path=/api/auth/refresh")));
+
+        // Active tokens are revoked
         assertThat(refreshTokenRepository.findByTokenHash(hash).get().isRevoked()).isTrue();
     }
 
