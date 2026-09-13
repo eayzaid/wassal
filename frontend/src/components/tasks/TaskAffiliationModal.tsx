@@ -71,31 +71,33 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
   // Action loading state
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
+  const taskId = task?.id;
+
   const fetchActiveMembers = useCallback(async () => {
-    if (!task) return;
+    if (!taskId) return;
     setIsLoadingMembers(true);
     try {
-      const data = await tasksApi.listActiveAffiliations(task.id);
+      const data = await tasksApi.listActiveAffiliations(taskId);
       setActiveMembers(data);
     } catch {
       // ignore
     } finally {
       setIsLoadingMembers(false);
     }
-  }, [task]);
+  }, [taskId]);
 
   const fetchRequests = useCallback(async () => {
-    if (!task) return;
+    if (!taskId) return;
     setIsLoadingRequests(true);
     try {
-      const data = await tasksApi.listAffiliationRequests(task.id);
+      const data = await tasksApi.listAffiliationRequests(taskId);
       setRequests(data);
     } catch {
       // ignore
     } finally {
       setIsLoadingRequests(false);
     }
-  }, [task]);
+  }, [taskId]);
 
   // Clean up debounce timer
   useEffect(() => {
@@ -106,8 +108,9 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
     };
   }, []);
 
+  // Fetch initial data only on modal open or when target task ID changes
   useEffect(() => {
-    if (isOpen && task) {
+    if (isOpen && taskId) {
       fetchActiveMembers();
       fetchRequests();
       // Reset search on modal open
@@ -116,7 +119,7 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
       setIsDebouncing(false);
       setIsLoadingUsers(false);
     }
-  }, [isOpen, task, fetchActiveMembers, fetchRequests]);
+  }, [isOpen, taskId, fetchActiveMembers, fetchRequests]);
 
   const performUserSearch = useCallback(
     async (query: string) => {
@@ -187,23 +190,52 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
 
   const isTaskDone = task.status === 'DONE';
 
-  // Decision on request
+  // Decision on request: only check that backend succeeded, and update local state in-place without triggering a dialog re-render
   const handleDecision = async (requestId: number, decision: Decision, requesterName: string) => {
+    if (!taskId) return;
     setActionLoadingId(`req-${requestId}`);
     try {
-      await tasksApi.handleAffiliationDecision(task.id, requestId, decision);
+      await tasksApi.handleAffiliationDecision(taskId, requestId, decision);
       toast.success(
         decision === 'APPROVE'
           ? `Demande de ${requesterName} approuvée.`
           : `Demande de ${requesterName} refusée.`
       );
-      // In-place updates
-      setRequests((prev) => prev.filter((r) => r.id !== requestId));
-      await fetchActiveMembers();
 
-      // Refresh parent task
-      const updated = await tasksApi.getTaskById(task.id);
-      onTaskUpdated?.(updated);
+      // Find the request before updating state
+      const targetReq = requests.find((r) => r.id === requestId);
+
+      // Remove request from pending list immediately without full refetch or dialog re-render
+      setRequests((prev) => prev.filter((r) => r.id !== requestId));
+
+      if (decision === 'APPROVE' && targetReq) {
+        // Add member directly to active members list
+        const newMember: TaskMemberDto = {
+          id: targetReq.requester.id,
+          userId: targetReq.requester.id,
+          firstName: targetReq.requester.firstName,
+          lastName: targetReq.requester.lastName,
+          email: targetReq.requester.email,
+          affiliatedAt: new Date().toISOString(),
+          doneRequestedAt: null,
+          pointsAwarded: null,
+        };
+
+        setActiveMembers((prev) => [
+          ...prev.filter((m) => (m.userId ?? m.id) !== targetReq.requester.id),
+          newMember,
+        ]);
+
+        if (onTaskUpdated && task) {
+          onTaskUpdated({
+            ...task,
+            activeMembers: [
+              ...(task.activeMembers || []).filter((m) => (m.userId ?? m.id) !== targetReq.requester.id),
+              newMember,
+            ],
+          });
+        }
+      }
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
       toast.error(error.response?.data?.message || 'Erreur lors du traitement de la demande.');
@@ -214,14 +246,23 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
 
   // Direct assign
   const handleDirectAssign = async (user: UserSummaryDto) => {
+    if (!taskId) return;
     setActionLoadingId(`assign-${user.id}`);
     try {
-      await tasksApi.directAssignMember(task.id, user.id);
+      const newMember = await tasksApi.directAssignMember(taskId, user.id);
       toast.success(`${user.firstName} ${user.lastName} affecté(e) à la mission.`);
       setSearchedUsers((prev) => prev.filter((u) => u.id !== user.id));
-      await fetchActiveMembers();
-      const updated = await tasksApi.getTaskById(task.id);
-      onTaskUpdated?.(updated);
+      setActiveMembers((prev) => [...prev.filter((m) => (m.userId ?? m.id) !== user.id), newMember]);
+
+      if (onTaskUpdated && task) {
+        onTaskUpdated({
+          ...task,
+          activeMembers: [
+            ...(task.activeMembers || []).filter((m) => (m.userId ?? m.id) !== user.id),
+            newMember,
+          ],
+        });
+      }
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
       toast.error(error.response?.data?.message || 'Erreur lors de l’affectation.');
@@ -232,15 +273,24 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
 
   // Un-affiliate
   const handleUnaffiliate = async (member: TaskMemberDto) => {
-    if (isTaskDone) return;
+    if (!taskId || isTaskDone) return;
     const targetUserId = member.userId ?? member.id;
     setActionLoadingId(`unaff-${member.id}`);
     try {
-      await tasksApi.unaffiliateMember(task.id, targetUserId);
+      await tasksApi.unaffiliateMember(taskId, targetUserId);
       toast.info(`${member.firstName} ${member.lastName} retiré(e) de la mission.`);
-      setActiveMembers((prev) => prev.filter((m) => m.id !== member.id && m.userId !== targetUserId));
-      const updated = await tasksApi.getTaskById(task.id);
-      onTaskUpdated?.(updated);
+      setActiveMembers((prev) =>
+        prev.filter((m) => m.id !== member.id && (m.userId ?? m.id) !== targetUserId)
+      );
+
+      if (onTaskUpdated && task) {
+        onTaskUpdated({
+          ...task,
+          activeMembers: (task.activeMembers || []).filter(
+            (m) => m.id !== member.id && (m.userId ?? m.id) !== targetUserId
+          ),
+        });
+      }
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
       toast.error(error.response?.data?.message || 'Erreur lors de la désaffectation.');
