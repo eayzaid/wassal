@@ -19,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -296,6 +297,75 @@ class AdminUserIntegrationTests {
                         .header("Authorization", presidentToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new ChangeRoleRequest(Role.TEAM_LEADER))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("INVALID_OPERATION")));
+    }
+
+    @Test
+    @DisplayName("Single President Rule: Only PRESIDENT can assign PRESIDENT role, which strips current president and demotes them to MEMBER")
+    void testPresidencyHandoverStripsCurrentPresidentAndEnsuresSinglePresident() throws Exception {
+        // 1. President assigns PRESIDENT role to member
+        mockMvc.perform(patch("/api/admin/users/" + member.getId() + "/role")
+                        .header("Authorization", presidentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ChangeRoleRequest(Role.PRESIDENT))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(member.getId().intValue())))
+                .andExpect(jsonPath("$.role", is("PRESIDENT")));
+
+        // 2. In DB, target is now PRESIDENT
+        User updatedMember = userRepository.findById(member.getId()).orElseThrow();
+        assertThat(updatedMember.getRole()).isEqualTo(Role.PRESIDENT);
+
+        // 3. In DB, former president has been stripped of the role and is now MEMBER
+        User formerPresident = userRepository.findById(president.getId()).orElseThrow();
+        assertThat(formerPresident.getRole()).isEqualTo(Role.MEMBER);
+
+        // 4. Exactly one PRESIDENT exists across the entire database
+        List<User> allPresidents = userRepository.findAllByRole(Role.PRESIDENT);
+        assertThat(allPresidents).hasSize(1);
+        assertThat(allPresidents.get(0).getId()).isEqualTo(member.getId());
+
+        // 5. Former president immediately loses admin privileges on their next request (via live JwtAuthFilter check)
+        mockMvc.perform(get("/api/admin/users")
+                        .header("Authorization", presidentToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Single President Rule: Non-president (VICE_PRESIDENT) cannot assign PRESIDENT role")
+    void testVicePresidentCannotAssignPresidentRole() throws Exception {
+        mockMvc.perform(patch("/api/admin/users/" + member.getId() + "/role")
+                        .header("Authorization", vicePresidentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ChangeRoleRequest(Role.PRESIDENT))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error", is("INSUFFICIENT_PRIVILEGE")));
+
+        // Verify president has not changed
+        assertThat(userRepository.findById(president.getId()).orElseThrow().getRole()).isEqualTo(Role.PRESIDENT);
+        assertThat(userRepository.findById(member.getId()).orElseThrow().getRole()).isEqualTo(Role.MEMBER);
+    }
+
+    @Test
+    @DisplayName("Single President Rule: Cannot assign PRESIDENT role to non-approved or blocked user")
+    void testCannotAssignPresidentToPendingOrBlockedUser() throws Exception {
+        // Pending user
+        mockMvc.perform(patch("/api/admin/users/" + pendingUser.getId() + "/role")
+                        .header("Authorization", presidentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ChangeRoleRequest(Role.PRESIDENT))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("INVALID_OPERATION")));
+
+        // Blocked member
+        member.setBlocked(true);
+        userRepository.save(member);
+
+        mockMvc.perform(patch("/api/admin/users/" + member.getId() + "/role")
+                        .header("Authorization", presidentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ChangeRoleRequest(Role.PRESIDENT))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("INVALID_OPERATION")));
     }

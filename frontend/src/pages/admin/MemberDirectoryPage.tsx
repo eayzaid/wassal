@@ -32,7 +32,7 @@ import { AxiosError } from 'axios';
 import { ErrorResponse } from '../../types';
 
 export const MemberDirectoryPage: React.FC = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, refreshUser } = useAuth();
   const toast = useToast();
 
   const [members, setMembers] = useState<UserSummaryDto[]>([]);
@@ -174,8 +174,27 @@ export const MemberDirectoryPage: React.FC = () => {
   const handleChangeRole = async (id: number, newRole: Role) => {
     try {
       const updated = await usersApi.changeRole(id, { role: newRole });
-      toast.success(`Rôle mis à jour pour ${updated.firstName} ${updated.lastName}`);
-      setMembers((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      const isPresidencyHandover = newRole === 'PRESIDENT' && currentUser?.role === 'PRESIDENT';
+
+      if (isPresidencyHandover) {
+        toast.warning(
+          `Passation effectuée : la présidence a été transmise à ${updated.firstName} ${updated.lastName}. Votre compte est désormais Membre.`
+        );
+        // Update both target (PRESIDENT) and actor (MEMBER) in the directory list
+        setMembers((prev) =>
+          prev.map((m) => {
+            if (m.id === id) return updated;
+            if (currentUser && m.id === currentUser.id) return { ...m, role: 'MEMBER' as Role };
+            return m;
+          })
+        );
+        // Refresh authenticated user state in context so authorities & navbar sync immediately
+        await refreshUser();
+      } else {
+        toast.success(`Rôle mis à jour pour ${updated.firstName} ${updated.lastName}`);
+        setMembers((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      }
+
       if (selectedMember?.id === id) {
         setSelectedMember(updated);
       }

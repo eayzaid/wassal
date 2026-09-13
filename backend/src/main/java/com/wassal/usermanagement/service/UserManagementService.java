@@ -122,6 +122,28 @@ public class UserManagementService {
         // BR-8: No user may change role on themself
         validateNotSelf(actor, target, "change the role of");
 
+        // Assignment of PRESIDENT role:
+        // Only the current PRESIDENT can assign the PRESIDENT role to another member.
+        // This action strips the current PRESIDENT of their role (demoting them to MEMBER),
+        // because only one PRESIDENT is allowed in the whole application.
+        if (newRole == Role.PRESIDENT) {
+            if (actor.getRole() != Role.PRESIDENT) {
+                throw new InsufficientPrivilegeException("Only the President can assign the President role.");
+            }
+            if (target.getAccountStatus() != AccountStatus.APPROVED || target.isBlocked()) {
+                throw new InvalidOperationException("President role can only be assigned to an active, approved member.");
+            }
+
+            // Strip the current president(s) of their role (demote to MEMBER)
+            List<User> existingPresidents = userRepository.findAllByRole(Role.PRESIDENT);
+            for (User p : existingPresidents) {
+                if (!p.getId().equals(target.getId())) {
+                    p.setRole(Role.MEMBER);
+                    userRepository.save(p);
+                }
+            }
+        }
+
         // BR-9: If target's current role is PRESIDENT or VICE_PRESIDENT, actor must be PRESIDENT
         if (target.getRole() == Role.PRESIDENT || target.getRole() == Role.VICE_PRESIDENT) {
             if (actor.getRole() != Role.PRESIDENT) {
