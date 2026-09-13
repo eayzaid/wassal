@@ -24,7 +24,7 @@ export const authApi = {
   },
 
   async refresh(): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>('/auth/refresh');
+    const response = await apiClient.post<LoginResponse>('/auth/refresh', {}, { withCredentials: true });
     setAccessToken(response.data.accessToken);
     return response.data;
   },

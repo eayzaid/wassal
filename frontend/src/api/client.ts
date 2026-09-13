@@ -29,17 +29,23 @@ export const getAccessToken = (): string | null => {
 
 export const apiClient = axios.create({
   baseURL: '/api',
-  withCredentials: true,
+  withCredentials: false,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor attaches bearer token
+// Request interceptor attaches bearer token and strictly sends cookie only on refresh
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (accessToken && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    // Only send the refresh token cookie in the refresh request
+    if (config.url?.includes('/auth/refresh')) {
+      config.withCredentials = true;
+    } else {
+      config.withCredentials = false;
     }
     return config;
   },
