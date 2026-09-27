@@ -131,31 +131,23 @@ export const TasksListPage: React.FC = () => {
     setPage(0);
   };
 
-  // Fetch counts for tabs
+  // Fetch counts for tabs using the single aggregated /tasks/summary endpoint
   const fetchCounts = useCallback(async () => {
     try {
-      const [allRes, myTasksRes, pendingRes, doneRes] = await Promise.allSettled([
-        tasksApi.listTasks({ size: 1 }),
-        tasksApi.getMyTasks({ size: 1 }),
-        tasksApi.listTasks({ status: 'PENDING_CONFIRMATION', size: 1 }),
-        tasksApi.listTasks({ completedByMe: true, status: 'DONE', size: 1 }),
-      ]);
-
-      const getCount = (res: PromiseSettledResult<any>) =>
-        res.status === 'fulfilled'
-          ? (res.value as any).page?.totalElements ?? (res.value as any).totalElements ?? 0
-          : 0;
-
+      const summary = await tasksApi.getSummary({
+        type: typeFilter !== 'ALL' ? typeFilter : undefined,
+        projectId: selectedProjectId !== 'ALL' ? selectedProjectId : undefined,
+      });
       setCounts({
-        all: getCount(allRes),
-        myTasks: getCount(myTasksRes),
-        pending: getCount(pendingRes),
-        done: getCount(doneRes),
+        all: summary.all ?? summary.total ?? 0,
+        myTasks: summary.myTasks ?? 0,
+        pending: summary.pending ?? summary.pendingConfirmation ?? 0,
+        done: summary.done ?? summary.completed ?? 0,
       });
     } catch {
       // non-critical
     }
-  }, []);
+  }, [typeFilter, selectedProjectId]);
 
   // Fetch projects dropdown list once
   useEffect(() => {
@@ -169,6 +161,9 @@ export const TasksListPage: React.FC = () => {
       }
     };
     fetchProjectsList();
+  }, []);
+
+  useEffect(() => {
     fetchCounts();
   }, [fetchCounts]);
 

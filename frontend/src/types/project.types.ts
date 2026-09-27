@@ -74,6 +74,23 @@ export function isTaskFullDto(task: TaskDto): task is TaskFullDto {
   return 'points' in task && typeof (task as TaskFullDto).points === 'number';
 }
 
+export interface TaskSummaryDto {
+  all: number;
+  myTasks: number;
+  pending: number;
+  done: number;
+  total?: number;
+  pendingConfirmation?: number;
+  completed?: number;
+}
+
+export interface TaskSummaryParams {
+  edition?: number;
+  type?: TaskType;
+  projectId?: number;
+  standalone?: boolean;
+}
+
 // Affiliations & Requests
 export interface RequesterSummaryDto {
   id: number;

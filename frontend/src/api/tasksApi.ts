@@ -10,6 +10,8 @@ import {
   Decision,
   MessageResponse,
   PageResponse,
+  TaskSummaryDto,
+  TaskSummaryParams,
 } from '../types';
 
 export interface TaskFilterParams {
@@ -48,6 +50,17 @@ export const tasksApi = {
     if (params?.sort) cleanParams.sort = params.sort;
 
     const response = await apiClient.get<PageResponse<TaskDto>>('/tasks/my-tasks', { params: cleanParams });
+    return response.data;
+  },
+
+  getSummary: async (params?: TaskSummaryParams): Promise<TaskSummaryDto> => {
+    const cleanParams: Record<string, string | number | boolean> = {};
+    if (params?.edition) cleanParams.edition = params.edition;
+    if (params?.type) cleanParams.type = params.type;
+    if (params?.projectId) cleanParams.projectId = params.projectId;
+    if (params?.standalone !== undefined) cleanParams.standalone = params.standalone;
+
+    const response = await apiClient.get<TaskSummaryDto>('/tasks/summary', { params: cleanParams });
     return response.data;
   },
 
