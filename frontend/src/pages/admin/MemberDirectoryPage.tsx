@@ -27,7 +27,9 @@ import {
   ChevronLeft,
   ChevronRight,
   RefreshCw,
+  Download,
 } from 'lucide-react';
+import { leaderboardApi } from '../../api/leaderboardApi';
 import { AxiosError } from 'axios';
 import { ErrorResponse } from '../../types';
 
@@ -63,6 +65,20 @@ export const MemberDirectoryPage: React.FC = () => {
     rejected: 0,
     blocked: 0,
   });
+
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportCsv = async () => {
+    setIsExporting(true);
+    try {
+      await leaderboardApi.downloadPointsCsv();
+      toast.success('Rapport des points téléchargé (CSV) !');
+    } catch {
+      toast.error('Échec du téléchargement du fichier CSV.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const fetchMembers = useCallback(async () => {
     setIsLoading(true);
@@ -251,15 +267,27 @@ export const MemberDirectoryPage: React.FC = () => {
         title="Annuaire des membres"
         subtitle="Consultation, filtrage et gouvernance des bénévoles de Caravane El Hayat"
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            className="text-xs h-9"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>Actualiser</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              className="text-xs h-9"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>Actualiser</span>
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleExportCsv}
+              disabled={isExporting}
+              className="text-xs h-9 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white font-semibold"
+            >
+              <Download className={`w-3.5 h-3.5 mr-1.5 ${isExporting ? 'animate-spin' : ''}`} />
+              <span>Exporter points (CSV)</span>
+            </Button>
+          </div>
         }
       />
 

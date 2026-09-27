@@ -16,6 +16,7 @@ import {
   ListTodo,
   Flame,
   MessageSquare,
+  Trophy,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -129,6 +130,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <NavLink to="/posts" className={navItemClasses} onClick={onClose}>
             <MessageSquare className="w-4 h-4 text-wassal-green" />
             <span>Actualités & Sondages</span>
+          </NavLink>
+          <NavLink to="/leaderboard" className={navItemClasses} onClick={onClose}>
+            <Trophy className="w-4 h-4 text-amber-400" />
+            <span>Classement des Membres</span>
           </NavLink>
 
           {isAdmin && (
