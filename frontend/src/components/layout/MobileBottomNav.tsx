@@ -13,9 +13,8 @@ export const MobileBottomNav: React.FC = () => {
 
     const fetchPendingCount = async () => {
       try {
-        const res = await usersApi.listUsers({ status: 'PENDING_APPROVAL', size: 1 });
-        const count = res.page?.totalElements ?? res.totalElements ?? 0;
-        setPendingCount(count);
+        const summary = await usersApi.getSummary();
+        setPendingCount(summary.pending);
       } catch {
         // silent fail
       }

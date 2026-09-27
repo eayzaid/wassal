@@ -38,3 +38,12 @@ export interface UserFilterParams {
   size?: number;
   sort?: string;
 }
+
+export interface UserCountsSummaryDto {
+  total: number;
+  approved: number;
+  pending: number;
+  rejected: number;
+  blocked: number;
+  active?: number;
+}

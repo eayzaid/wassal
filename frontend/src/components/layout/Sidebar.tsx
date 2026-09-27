@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { usersApi } from '../../api/usersApi';
 import { RoleBadge } from '../common/RoleBadge';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Button } from '../ui/button';
@@ -25,6 +26,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const [isDangerZoneOpen, setIsDangerZoneOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    usersApi
+      .getSummary()
+      .then((res) => setPendingCount(res.pending))
+      .catch(() => {});
+  }, [isAdmin]);
 
   const isPresident = user?.role === 'PRESIDENT';
 
@@ -126,8 +136,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <span>Annuaire des membres</span>
               </NavLink>
               <NavLink to="/admin/pending" className={navItemClasses} onClick={onClose}>
-                <UserCheck className="w-4 h-4 text-wassal-green" />
-                <span>Validations en attente</span>
+                <UserCheck className="w-4 h-4 text-wassal-green shrink-0" />
+                <span className="flex-1">Validations en attente</span>
+                {pendingCount > 0 && (
+                  <span className="bg-amber-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+                    {pendingCount}
+                  </span>
+                )}
               </NavLink>
             </>
           )}

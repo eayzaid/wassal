@@ -84,19 +84,13 @@ export const MemberDirectoryPage: React.FC = () => {
   // Fetch count summaries
   const fetchCounts = useCallback(async () => {
     try {
-      const [allRes, pendingRes, approvedRes, rejectedRes, blockedRes] = await Promise.all([
-        usersApi.listUsers({ size: 1 }),
-        usersApi.listUsers({ status: 'PENDING_APPROVAL', size: 1 }),
-        usersApi.listUsers({ status: 'APPROVED', blocked: false, size: 1 }),
-        usersApi.listUsers({ status: 'REJECTED', size: 1 }),
-        usersApi.listUsers({ blocked: true, size: 1 }),
-      ]);
+      const summary = await usersApi.getSummary();
       setCounts({
-        total: allRes.page?.totalElements ?? allRes.totalElements ?? 0,
-        pending: pendingRes.page?.totalElements ?? pendingRes.totalElements ?? 0,
-        approved: approvedRes.page?.totalElements ?? approvedRes.totalElements ?? 0,
-        rejected: rejectedRes.page?.totalElements ?? rejectedRes.totalElements ?? 0,
-        blocked: blockedRes.page?.totalElements ?? blockedRes.totalElements ?? 0,
+        total: summary.total,
+        approved: summary.approved,
+        pending: summary.pending,
+        rejected: summary.rejected,
+        blocked: summary.blocked,
       });
     } catch {
       // Non-critical background metric failure

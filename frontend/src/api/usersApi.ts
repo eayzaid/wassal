@@ -1,12 +1,18 @@
 import { apiClient } from './client';
 import {
   UserSummaryDto,
+  UserCountsSummaryDto,
   UserFilterParams,
   PageResponse,
   ChangeRoleRequest,
 } from '../types';
 
 export const usersApi = {
+  async getSummary(): Promise<UserCountsSummaryDto> {
+    const response = await apiClient.get<UserCountsSummaryDto>('/admin/users/summary');
+    return response.data;
+  },
+
   async listUsers(params: UserFilterParams = {}): Promise<PageResponse<UserSummaryDto>> {
     const cleanParams: Record<string, string | number | boolean> = {};
 
