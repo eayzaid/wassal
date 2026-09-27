@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usersApi } from '../../api/usersApi';
-import { Users, UserCheck, User, FolderKanban, ListTodo } from 'lucide-react';
+import { Users, UserCheck, User, FolderKanban, ListTodo, MessageSquare } from 'lucide-react';
 
 export const MobileBottomNav: React.FC = () => {
   const { isAdmin, isAuthenticated } = useAuth();
@@ -88,6 +88,35 @@ export const MobileBottomNav: React.FC = () => {
                 />
               </div>
               <span className="truncate">Tâches</span>
+            </>
+          )}
+        </NavLink>
+
+        {/* Posts Tab */}
+        <NavLink
+          to="/posts"
+          className={({ isActive }) =>
+            `flex flex-col items-center justify-center flex-1 h-full py-1 gap-0.5 text-[10px] font-medium transition-colors ${
+              isActive
+                ? 'text-wassal-plum font-bold'
+                : 'text-wassal-slate hover:text-wassal-plum'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              <div
+                className={`p-1 rounded-full transition-transform ${
+                  isActive ? 'bg-wassal-green/20 scale-105' : ''
+                }`}
+              >
+                <MessageSquare
+                  className={`w-5 h-5 ${
+                    isActive ? 'text-wassal-green-ink' : 'text-wassal-slate'
+                  }`}
+                />
+              </div>
+              <span className="truncate">Actualités</span>
             </>
           )}
         </NavLink>

@@ -19,6 +19,8 @@ import { ProfilePage } from '../pages/profile/ProfilePage';
 import { ProjectsListPage } from '../pages/projects/ProjectsListPage';
 import { ProjectDetailPage } from '../pages/projects/ProjectDetailPage';
 import { TasksListPage } from '../pages/tasks/TasksListPage';
+import { PostsFeedPage } from '../pages/posts/PostsFeedPage';
+import { PostDetailPage } from '../pages/posts/PostDetailPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
 const RootRedirect: React.FC = () => {
@@ -45,6 +47,8 @@ export const AppRoutes: React.FC = () => {
           <Route path="/projects" element={<ProjectsListPage />} />
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
           <Route path="/tasks" element={<TasksListPage />} />
+          <Route path="/posts" element={<PostsFeedPage />} />
+          <Route path="/posts/:id" element={<PostDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
 
           {/* Admin routes */}

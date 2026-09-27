@@ -15,6 +15,7 @@ import {
   FolderKanban,
   ListTodo,
   Flame,
+  MessageSquare,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -124,6 +125,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <NavLink to="/tasks" className={navItemClasses} onClick={onClose}>
             <ListTodo className="w-4 h-4 text-wassal-sage" />
             <span>Tâches & Collectes</span>
+          </NavLink>
+          <NavLink to="/posts" className={navItemClasses} onClick={onClose}>
+            <MessageSquare className="w-4 h-4 text-wassal-green" />
+            <span>Actualités & Sondages</span>
           </NavLink>
 
           {isAdmin && (
