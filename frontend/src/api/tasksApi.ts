@@ -5,6 +5,7 @@ import {
   TaskMemberDto,
   AffiliationRequestDto,
   CreateTaskRequest,
+  TaskType,
   TaskStatus,
   Decision,
   MessageResponse,
@@ -12,25 +13,53 @@ import {
 } from '../types';
 
 export interface TaskFilterParams {
+  type?: TaskType;
   edition?: number;
   status?: TaskStatus;
   projectId?: number;
   standalone?: boolean;
   mine?: boolean;
+  myTasks?: boolean;
   completedByMe?: boolean;
   page?: number;
   size?: number;
   sort?: string;
 }
 
+export interface MyTasksFilterParams {
+  type?: TaskType;
+  status?: TaskStatus;
+  projectId?: number;
+  edition?: number;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
 export const tasksApi = {
+  getMyTasks: async (params?: MyTasksFilterParams): Promise<PageResponse<TaskDto>> => {
+    const cleanParams: Record<string, string | number | boolean> = {};
+    if (params?.type) cleanParams.type = params.type;
+    if (params?.status) cleanParams.status = params.status;
+    if (params?.projectId) cleanParams.projectId = params.projectId;
+    if (params?.edition) cleanParams.edition = params.edition;
+    if (params?.page !== undefined) cleanParams.page = params.page;
+    if (params?.size !== undefined) cleanParams.size = params.size;
+    if (params?.sort) cleanParams.sort = params.sort;
+
+    const response = await apiClient.get<PageResponse<TaskDto>>('/tasks/my-tasks', { params: cleanParams });
+    return response.data;
+  },
+
   listTasks: async (params?: TaskFilterParams): Promise<PageResponse<TaskDto>> => {
     const cleanParams: Record<string, string | number | boolean> = {};
+    if (params?.type) cleanParams.type = params.type;
     if (params?.edition) cleanParams.edition = params.edition;
     if (params?.status) cleanParams.status = params.status;
     if (params?.projectId) cleanParams.projectId = params.projectId;
     if (params?.standalone !== undefined) cleanParams.standalone = params.standalone;
     if (params?.mine !== undefined) cleanParams.mine = params.mine;
+    if (params?.myTasks !== undefined) cleanParams.myTasks = params.myTasks;
     if (params?.completedByMe !== undefined) cleanParams.completedByMe = params.completedByMe;
     if (params?.page !== undefined) cleanParams.page = params.page;
     if (params?.size !== undefined) cleanParams.size = params.size;

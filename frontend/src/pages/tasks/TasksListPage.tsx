@@ -4,7 +4,7 @@ import { projectsApi } from '../../api/projectsApi';
 import { TaskDto, ProjectDto, TaskType, TaskFullDto } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
-import { canCreateTask, isAffiliatedWithTask } from '../../utils/projectPermissions';
+import { canCreateTask } from '../../utils/projectPermissions';
 import { TaskCard } from '../../components/tasks/TaskCard';
 import { CreateTaskModal } from '../../components/tasks/CreateTaskModal';
 import { TaskAffiliationModal } from '../../components/tasks/TaskAffiliationModal';
@@ -134,40 +134,28 @@ export const TasksListPage: React.FC = () => {
   // Fetch counts for tabs
   const fetchCounts = useCallback(async () => {
     try {
-      const [allRes, pendingRes, allTasksRes] = await Promise.allSettled([
+      const [allRes, myTasksRes, pendingRes, doneRes] = await Promise.allSettled([
         tasksApi.listTasks({ size: 1 }),
+        tasksApi.getMyTasks({ size: 1 }),
         tasksApi.listTasks({ status: 'PENDING_CONFIRMATION', size: 1 }),
-        tasksApi.listTasks({ size: 100 }),
+        tasksApi.listTasks({ completedByMe: true, status: 'DONE', size: 1 }),
       ]);
 
-      const allCount =
-        allRes.status === 'fulfilled'
-          ? (allRes.value as any).page?.totalElements ?? (allRes.value as any).totalElements ?? 0
+      const getCount = (res: PromiseSettledResult<any>) =>
+        res.status === 'fulfilled'
+          ? (res.value as any).page?.totalElements ?? (res.value as any).totalElements ?? 0
           : 0;
-      const pendingCount =
-        pendingRes.status === 'fulfilled'
-          ? (pendingRes.value as any).page?.totalElements ?? (pendingRes.value as any).totalElements ?? 0
-          : 0;
-
-      let myTasksCount = 0;
-      let doneCount = 0;
-      if (allTasksRes.status === 'fulfilled') {
-        const resVal: any = allTasksRes.value;
-        const items: TaskDto[] = resVal.content || (Array.isArray(resVal) ? resVal : []);
-        myTasksCount = items.filter((t) => isAffiliatedWithTask(user?.id, t)).length;
-        doneCount = items.filter((t) => t.status === 'DONE' && isAffiliatedWithTask(user?.id, t)).length;
-      }
 
       setCounts({
-        all: allCount,
-        myTasks: myTasksCount,
-        pending: pendingCount,
-        done: doneCount,
+        all: getCount(allRes),
+        myTasks: getCount(myTasksRes),
+        pending: getCount(pendingRes),
+        done: getCount(doneRes),
       });
     } catch {
       // non-critical
     }
-  }, [user?.id]);
+  }, []);
 
   // Fetch projects dropdown list once
   useEffect(() => {
@@ -188,60 +176,67 @@ export const TasksListPage: React.FC = () => {
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     try {
-      const isClientFiltered = Boolean(
-        debouncedSearch ||
-        typeFilter !== 'ALL' ||
-        currentTab === 'MY_TASKS' ||
-        currentTab === 'DONE'
-      );
+      const isSearchActive = Boolean(debouncedSearch.trim());
+      const selectedType = typeFilter !== 'ALL' ? typeFilter : undefined;
+      const selectedProject = selectedProjectId !== 'ALL' ? selectedProjectId : undefined;
 
-      const backendStatus =
-        currentTab === 'PENDING'
-          ? 'PENDING_CONFIRMATION'
-          : currentTab === 'DONE'
-          ? 'DONE'
-          : undefined;
-
-      if (isClientFiltered) {
-        const res: any = await tasksApi.listTasks({
-          status: backendStatus,
-          projectId: selectedProjectId !== 'ALL' ? selectedProjectId : undefined,
-          size: 100,
+      const fetchTabTasks = async (pageSize: number, pageNum?: number) => {
+        if (currentTab === 'MY_TASKS') {
+          return await tasksApi.getMyTasks({
+            type: selectedType,
+            projectId: selectedProject,
+            page: pageNum,
+            size: pageSize,
+            sort: 'createdAt,desc',
+          });
+        }
+        if (currentTab === 'DONE') {
+          return await tasksApi.listTasks({
+            completedByMe: true,
+            status: 'DONE',
+            type: selectedType,
+            projectId: selectedProject,
+            page: pageNum,
+            size: pageSize,
+            sort: 'createdAt,desc',
+          });
+        }
+        if (currentTab === 'PENDING') {
+          return await tasksApi.listTasks({
+            status: 'PENDING_CONFIRMATION',
+            type: selectedType,
+            projectId: selectedProject,
+            page: pageNum,
+            size: pageSize,
+            sort: 'createdAt,desc',
+          });
+        }
+        return await tasksApi.listTasks({
+          type: selectedType,
+          projectId: selectedProject,
+          page: pageNum,
+          size: pageSize,
           sort: 'createdAt,desc',
         });
+      };
+
+      if (isSearchActive) {
+        const res: any = await fetchTabTasks(100);
         const allItems: TaskDto[] = res.content || (Array.isArray(res) ? res : []);
+        const query = debouncedSearch.trim().toLowerCase();
 
-        const filtered = allItems.filter((t) => {
-          const matchesSearch =
-            !debouncedSearch ||
-            t.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-            (t.description && t.description.toLowerCase().includes(debouncedSearch.toLowerCase()));
-
-          let matchesTab = true;
-          if (currentTab === 'MY_TASKS') {
-            matchesTab = isAffiliatedWithTask(user?.id, t);
-          } else if (currentTab === 'DONE') {
-            matchesTab = t.status === 'DONE' && isAffiliatedWithTask(user?.id, t);
-          }
-
-          const matchesType = typeFilter === 'ALL' || t.type === typeFilter;
-
-          return matchesSearch && matchesTab && matchesType;
-        });
+        const filtered = allItems.filter(
+          (t) =>
+            t.name.toLowerCase().includes(query) ||
+            (t.description && t.description.toLowerCase().includes(query))
+        );
 
         const start = page * 10;
         setTasks(filtered.slice(start, start + 10));
         setTotalElements(filtered.length);
         setTotalPages(Math.ceil(filtered.length / 10) || 1);
       } else {
-        const res: any = await tasksApi.listTasks({
-          status: backendStatus,
-          projectId: selectedProjectId !== 'ALL' ? selectedProjectId : undefined,
-          page,
-          size: 10,
-          sort: 'createdAt,desc',
-        });
-
+        const res: any = await fetchTabTasks(10, page);
         const items = res.content || [];
         setTasks(items);
         setTotalElements(res.page?.totalElements ?? res.totalElements ?? items.length);
@@ -252,7 +247,7 @@ export const TasksListPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentTab, typeFilter, selectedProjectId, debouncedSearch, page, user?.id, toast]);
+  }, [currentTab, typeFilter, selectedProjectId, debouncedSearch, page, toast]);
 
   useEffect(() => {
     fetchTasks();
@@ -287,6 +282,7 @@ export const TasksListPage: React.FC = () => {
       toast.success('Demande de participation transmise');
       const updated = await tasksApi.getTaskById(task.id);
       handleTaskUpdated(updated);
+      fetchCounts();
     } catch (err: any) {
       handleTaskUpdated(task);
       toast.error(
