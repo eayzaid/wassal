@@ -100,15 +100,11 @@ export const ProjectsListPage: React.FC = () => {
 
   const fetchCounts = useCallback(async (edition: number) => {
     try {
-      const [allRes, activeRes, doneRes] = await Promise.all([
-        projectsApi.listProjects({ edition, size: 1 }),
-        projectsApi.listProjects({ edition, status: 'ACTIVE', size: 1 }),
-        projectsApi.listProjects({ edition, status: 'DONE', size: 1 }),
-      ]);
+      const summary = await projectsApi.getSummary({ edition });
       setCounts({
-        all: (allRes as any).page?.totalElements ?? (allRes as any).totalElements ?? 0,
-        active: (activeRes as any).page?.totalElements ?? (activeRes as any).totalElements ?? 0,
-        done: (doneRes as any).page?.totalElements ?? (doneRes as any).totalElements ?? 0,
+        all: summary.all,
+        active: summary.active,
+        done: summary.done,
       });
     } catch {
       // non-critical
@@ -157,6 +153,11 @@ export const ProjectsListPage: React.FC = () => {
     fetchProjects();
   }, [fetchProjects]);
 
+  const handleRefresh = () => {
+    fetchProjects();
+    fetchCounts(currentEdition);
+  };
+
   const handleProjectCreated = (_newProject: ProjectFullDto) => {
     fetchProjects();
     fetchCounts(currentEdition);
@@ -200,7 +201,7 @@ export const ProjectsListPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchProjects}
+            onClick={handleRefresh}
             disabled={isLoading}
             className="h-10 text-wassal-slate hover:text-wassal-plum"
             title="Rafraîchir"

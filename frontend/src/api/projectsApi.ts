@@ -7,6 +7,8 @@ import {
   TaskFullDto,
   ProjectStatus,
   PageResponse,
+  ProjectSummaryDto,
+  ProjectSummaryParams,
 } from '../types';
 
 export interface ProjectFilterParams {
@@ -19,6 +21,14 @@ export interface ProjectFilterParams {
 }
 
 export const projectsApi = {
+  getSummary: async (params?: ProjectSummaryParams): Promise<ProjectSummaryDto> => {
+    const cleanParams: Record<string, number> = {};
+    if (params?.edition !== undefined) cleanParams.edition = params.edition;
+
+    const response = await apiClient.get<ProjectSummaryDto>('/projects/summary', { params: cleanParams });
+    return response.data;
+  },
+
   listProjects: async (params?: ProjectFilterParams): Promise<PageResponse<ProjectDto>> => {
     const cleanParams: Record<string, string | number> = {};
     if (params?.edition) cleanParams.edition = params.edition;

@@ -33,6 +33,18 @@ export function isProjectFullDto(project: ProjectDto): project is ProjectFullDto
   return 'totalPoints' in project && typeof (project as ProjectFullDto).totalPoints === 'number';
 }
 
+export interface ProjectSummaryDto {
+  all: number;
+  active: number;
+  done: number;
+  total?: number;
+  completed?: number;
+}
+
+export interface ProjectSummaryParams {
+  edition?: number;
+}
+
 // Tasks
 export interface TaskMemberDto {
   id: number;
