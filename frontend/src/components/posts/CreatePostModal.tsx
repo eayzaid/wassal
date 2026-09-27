@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
+import { DatePicker } from '../ui/date-picker';
 import { MessageSquare, BarChart2, Plus, Trash2, Eye, Edit3 } from 'lucide-react';
 
 interface CreatePostModalProps {
@@ -261,11 +262,12 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 <label className="block text-[11px] font-semibold text-wassal-plum mb-1">
                   Date & Heure de clôture <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="datetime-local"
+                <DatePicker
                   value={pollCloseDate}
-                  onChange={(e) => setPollCloseDate(e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-wassal-border bg-white focus:outline-none focus:ring-1 focus:ring-wassal-green"
+                  onChange={(val) => setPollCloseDate(val)}
+                  includeTime={true}
+                  minDate={new Date()}
+                  placeholder="Sélectionner la date et heure de clôture"
                 />
                 {errors.pollCloseDate && (
                   <p className="text-[11px] text-rose-500 mt-1">{errors.pollCloseDate}</p>

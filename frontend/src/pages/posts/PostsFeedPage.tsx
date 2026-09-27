@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PostDto, PostType } from '../../types';
 import { postsApi } from '../../api/postsApi';
 import { useToast } from '../../hooks/useToast';
 import { PostCard } from '../../components/posts/PostCard';
 import { CreatePostModal } from '../../components/posts/CreatePostModal';
 import { EditPostModal } from '../../components/posts/EditPostModal';
-import { Pagination } from '../../components/common/Pagination';
 import { Button } from '../../components/ui/button';
 import {
   MessageSquare,
@@ -17,73 +16,137 @@ import {
   BarChart2,
   FileText,
   Loader2,
+  CheckCircle2,
 } from 'lucide-react';
 
 export const PostsFeedPage: React.FC = () => {
   const toast = useToast();
 
   const [posts, setPosts] = useState<PostDto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Filters & Pagination
+  // Filters & Infinite Scroll Pagination
   const [selectedType, setSelectedType] = useState<'ALL' | PostType>('ALL');
   const [sortOrder, setSortOrder] = useState<'new' | 'top'>('new');
   const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [totalElements, setTotalElements] = useState(0);
+
+  // Sentinel ref for infinite scroll
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<PostDto | null>(null);
 
-  const fetchPosts = useCallback(async () => {
-    setIsLoading(true);
+  // Initial fetch / Filter reset
+  const fetchFirstPage = useCallback(async () => {
+    setIsInitialLoading(true);
     try {
       const res = await postsApi.listPosts({
         type: selectedType !== 'ALL' ? selectedType : undefined,
         sort: sortOrder,
-        page,
+        page: 0,
         size: 10,
       });
       setPosts(res.content || []);
+      setPage(0);
       const total = res.page?.totalElements ?? res.totalElements ?? (res.content?.length || 0);
-      const pages = res.page?.totalPages ?? res.totalPages ?? 1;
+      const totalP = res.page?.totalPages ?? res.totalPages ?? 1;
       setTotalElements(total);
-      setTotalPages(pages);
+      setHasMore(1 < totalP);
     } catch {
       toast.error('Impossible de charger le fil communautaire.');
     } finally {
-      setIsLoading(false);
+      setIsInitialLoading(false);
     }
-  }, [selectedType, sortOrder, page, toast]);
+  }, [selectedType, sortOrder, toast]);
 
   useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    fetchFirstPage();
+  }, [fetchFirstPage]);
+
+  // Load next page on scroll
+  const fetchNextPage = useCallback(async () => {
+    if (isLoadingMore || isInitialLoading || !hasMore) return;
+    setIsLoadingMore(true);
+    const nextPage = page + 1;
+
+    try {
+      const res = await postsApi.listPosts({
+        type: selectedType !== 'ALL' ? selectedType : undefined,
+        sort: sortOrder,
+        page: nextPage,
+        size: 10,
+      });
+
+      const incoming = res.content || [];
+      setPosts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const newUnique = incoming.filter((p) => !existingIds.has(p.id));
+        return [...prev, ...newUnique];
+      });
+
+      setPage(nextPage);
+      const totalP = res.page?.totalPages ?? res.totalPages ?? 1;
+      const total = res.page?.totalElements ?? res.totalElements ?? totalElements;
+      setTotalElements(total);
+      setHasMore(nextPage + 1 < totalP);
+    } catch {
+      toast.error('Erreur lors du chargement des publications suivantes.');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, isInitialLoading, hasMore, page, selectedType, sortOrder, totalElements, toast]);
+
+  // Infinite scroll intersection observer with 200px threshold buffer
+  useEffect(() => {
+    if (!hasMore || isInitialLoading || isLoadingMore) return;
+
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isInitialLoading, isLoadingMore, fetchNextPage]);
 
   const handleTypeChange = (type: 'ALL' | PostType) => {
+    if (selectedType === type) return;
     setSelectedType(type);
-    setPage(0);
   };
 
   const handleSortChange = (sort: 'new' | 'top') => {
+    if (sortOrder === sort) return;
     setSortOrder(sort);
-    setPage(0);
   };
 
-  const handlePostCreated = (newPost: PostDto) => {
+  const handlePostCreated = useCallback((newPost: PostDto) => {
     setPosts((prev) => [newPost, ...prev]);
     setTotalElements((prev) => prev + 1);
-  };
+  }, []);
 
-  const handlePostUpdated = (updated: PostDto) => {
+  const handlePostUpdated = useCallback((updated: PostDto) => {
     setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-  };
+  }, []);
 
-  const handlePostDeleted = (deletedId: number) => {
+  const handlePostDeleted = useCallback((deletedId: number) => {
     setPosts((prev) => prev.filter((p) => p.id !== deletedId));
     setTotalElements((prev) => Math.max(0, prev - 1));
-  };
+  }, []);
+
+  const handleEditRequested = useCallback((post: PostDto) => {
+    setEditingPost(post);
+  }, []);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
@@ -108,12 +171,12 @@ export const PostsFeedPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchPosts}
-            disabled={isLoading}
+            onClick={fetchFirstPage}
+            disabled={isInitialLoading}
             className="h-10 text-wassal-slate hover:text-wassal-plum"
             title="Rafraîchir"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isInitialLoading ? 'animate-spin' : ''}`} />
           </Button>
 
           <Button
@@ -199,7 +262,7 @@ export const PostsFeedPage: React.FC = () => {
       </div>
 
       {/* Feed List */}
-      {isLoading ? (
+      {isInitialLoading ? (
         <div className="flex flex-col items-center justify-center py-16 text-wassal-slate space-y-3">
           <Loader2 className="w-8 h-8 animate-spin text-wassal-green-ink" />
           <p className="text-sm font-medium">Chargement des publications...</p>
@@ -226,25 +289,37 @@ export const PostsFeedPage: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {posts.map((post) => (
-            <PostCard
+            <div
               key={post.id}
-              post={post}
-              onPostUpdated={handlePostUpdated}
-              onPostDeleted={handlePostDeleted}
-              onEditRequested={(p) => setEditingPost(p)}
-            />
+              style={{ contentVisibility: 'auto', containIntrinsicSize: '0 280px' }}
+            >
+              <PostCard
+                post={post}
+                onPostUpdated={handlePostUpdated}
+                onPostDeleted={handlePostDeleted}
+                onEditRequested={handleEditRequested}
+              />
+            </div>
           ))}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="pt-4 flex justify-center">
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                totalElements={totalElements}
-                pageSize={10}
-                onPageChange={(newPage) => setPage(newPage)}
-              />
+          {/* Infinite Scroll Sentinel */}
+          <div ref={sentinelRef} className="h-6" />
+
+          {/* Loading More Indicator */}
+          {isLoadingMore && (
+            <div className="py-4 flex items-center justify-center gap-2 text-xs text-wassal-slate">
+              <Loader2 className="w-4 h-4 animate-spin text-wassal-green-ink" />
+              <span>Chargement des publications suivantes...</span>
+            </div>
+          )}
+
+          {/* End of Feed Indicator */}
+          {!hasMore && posts.length > 0 && (
+            <div className="py-6 text-center text-xs text-wassal-slate border-t border-wassal-border/60 flex items-center justify-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-wassal-green-ink" />
+              <span>
+                Vous êtes à jour ! ({totalElements} publication{totalElements > 1 ? 's' : ''})
+              </span>
             </div>
           )}
         </div>

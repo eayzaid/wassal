@@ -75,10 +75,14 @@ export const PollCard: React.FC<PollCardProps> = ({ postId, poll, onPollUpdated 
       <div className="space-y-2">
         {poll.options.map((option: PollOptionResultDto) => {
           const isSelected = selectedIds.includes(option.optionId);
-          const percent =
-            poll.totalVoters > 0
-              ? Math.round((option.voteCount / poll.totalVoters) * 100)
-              : 0;
+          const totalVotes = poll.options.reduce((sum, opt) => sum + (opt.voteCount || 0), 0);
+          const percentValue = totalVotes > 0 ? (option.voteCount / totalVotes) * 100 : 0;
+          const percentDisplay =
+            totalVotes > 0
+              ? Number.isInteger(percentValue)
+                ? `${percentValue}%`
+                : `${percentValue.toFixed(2)}%`
+              : '0%';
 
           return (
             <div
@@ -99,7 +103,7 @@ export const PollCard: React.FC<PollCardProps> = ({ postId, poll, onPollUpdated 
                 className={`absolute top-0 bottom-0 left-0 transition-all duration-500 ease-out ${
                   isSelected ? 'bg-wassal-green/20' : 'bg-wassal-slate/10'
                 }`}
-                style={{ width: `${percent}%` }}
+                style={{ width: `${percentValue}%` }}
               />
 
               {/* Content */}
@@ -133,8 +137,12 @@ export const PollCard: React.FC<PollCardProps> = ({ postId, poll, onPollUpdated 
                   <span className="text-wassal-slate font-medium">
                     {option.voteCount} vote{option.voteCount > 1 ? 's' : ''}
                   </span>
-                  <span className={`w-9 text-right ${isSelected ? 'text-wassal-green-ink font-bold' : 'text-wassal-plum'}`}>
-                    {percent}%
+                  <span
+                    className={`w-14 text-right tabular-nums ${
+                      isSelected ? 'text-wassal-green-ink font-bold' : 'text-wassal-plum'
+                    }`}
+                  >
+                    {percentDisplay}
                   </span>
                 </div>
               </div>

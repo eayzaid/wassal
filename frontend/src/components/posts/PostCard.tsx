@@ -32,7 +32,7 @@ interface PostCardProps {
   initiallyExpandedComments?: boolean;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({
+export const PostCard: React.FC<PostCardProps> = React.memo(({
   post,
   onPostUpdated,
   onPostDeleted,
@@ -496,4 +496,4 @@ export const PostCard: React.FC<PostCardProps> = ({
       </div>
     </article>
   );
-};
+});
