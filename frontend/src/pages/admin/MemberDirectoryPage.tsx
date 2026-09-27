@@ -71,7 +71,7 @@ export const MemberDirectoryPage: React.FC = () => {
   const handleExportCsv = async () => {
     setIsExporting(true);
     try {
-      await leaderboardApi.downloadPointsCsv();
+      await leaderboardApi.downloadAdminUsersPointsCsv();
       toast.success('Rapport des points téléchargé (CSV) !');
     } catch {
       toast.error('Échec du téléchargement du fichier CSV.');

@@ -56,6 +56,8 @@ export interface PostDto {
   content: string; // Raw Markdown source text
   authorName: string;
   pinned: boolean;
+  isArchived: boolean;
+  archived: boolean; // Alias of isArchived
   createdAt: string;
   updatedAt: string;
   edited: boolean;
@@ -85,6 +87,7 @@ export interface PostFilterParams {
   type?: PostType;
   authorId?: number;
   sort?: 'new' | 'top'; // default: 'new'
+  archived?: boolean; // default: false (returns active feed; set true to browse archived historical posts)
   page?: number;
   size?: number;
 }

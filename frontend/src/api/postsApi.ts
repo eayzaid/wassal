@@ -10,10 +10,11 @@ import {
 
 export const postsApi = {
   listPosts: async (params?: PostFilterParams): Promise<PageResponse<PostDto>> => {
-    const cleanParams: Record<string, string | number> = {};
+    const cleanParams: Record<string, string | number | boolean> = {};
     if (params?.type) cleanParams.type = params.type;
     if (params?.authorId) cleanParams.authorId = params.authorId;
     if (params?.sort) cleanParams.sort = params.sort;
+    if (params?.archived !== undefined) cleanParams.archived = params.archived;
     if (params?.page !== undefined) cleanParams.page = params.page;
     if (params?.size !== undefined) cleanParams.size = params.size;
 

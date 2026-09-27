@@ -48,7 +48,7 @@ export const LeaderboardPage: React.FC = () => {
   const handleExportCsv = async () => {
     setIsExporting(true);
     try {
-      await leaderboardApi.downloadPointsCsv();
+      await leaderboardApi.downloadUsersPointsCsv();
       toast.success('Rapport des points téléchargé avec succès (CSV) !');
     } catch {
       toast.error("Échec du téléchargement du fichier des points.");

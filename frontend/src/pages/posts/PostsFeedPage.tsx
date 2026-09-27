@@ -17,6 +17,7 @@ import {
   FileText,
   Loader2,
   CheckCircle2,
+  Archive,
 } from 'lucide-react';
 
 export const PostsFeedPage: React.FC = () => {
@@ -29,6 +30,7 @@ export const PostsFeedPage: React.FC = () => {
   // Filters & Infinite Scroll Pagination
   const [selectedType, setSelectedType] = useState<'ALL' | PostType>('ALL');
   const [sortOrder, setSortOrder] = useState<'new' | 'top'>('new');
+  const [archivedFeed, setArchivedFeed] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [totalElements, setTotalElements] = useState(0);
@@ -47,6 +49,7 @@ export const PostsFeedPage: React.FC = () => {
       const res = await postsApi.listPosts({
         type: selectedType !== 'ALL' ? selectedType : undefined,
         sort: sortOrder,
+        archived: archivedFeed,
         page: 0,
         size: 10,
       });
@@ -61,7 +64,7 @@ export const PostsFeedPage: React.FC = () => {
     } finally {
       setIsInitialLoading(false);
     }
-  }, [selectedType, sortOrder, toast]);
+  }, [selectedType, sortOrder, archivedFeed, toast]);
 
   useEffect(() => {
     fetchFirstPage();
@@ -77,6 +80,7 @@ export const PostsFeedPage: React.FC = () => {
       const res = await postsApi.listPosts({
         type: selectedType !== 'ALL' ? selectedType : undefined,
         sort: sortOrder,
+        archived: archivedFeed,
         page: nextPage,
         size: 10,
       });
@@ -98,7 +102,7 @@ export const PostsFeedPage: React.FC = () => {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, isInitialLoading, hasMore, page, selectedType, sortOrder, totalElements, toast]);
+  }, [isLoadingMore, isInitialLoading, hasMore, page, selectedType, sortOrder, archivedFeed, totalElements, toast]);
 
   // Infinite scroll intersection observer with 200px threshold buffer
   useEffect(() => {
@@ -130,10 +134,19 @@ export const PostsFeedPage: React.FC = () => {
     setSortOrder(sort);
   };
 
+  const handleArchivedToggle = (archived: boolean) => {
+    if (archivedFeed === archived) return;
+    setArchivedFeed(archived);
+  };
+
   const handlePostCreated = useCallback((newPost: PostDto) => {
-    setPosts((prev) => [newPost, ...prev]);
-    setTotalElements((prev) => prev + 1);
-  }, []);
+    if (archivedFeed) {
+      setArchivedFeed(false);
+    } else {
+      setPosts((prev) => [newPost, ...prev]);
+      setTotalElements((prev) => prev + 1);
+    }
+  }, [archivedFeed]);
 
   const handlePostUpdated = useCallback((updated: PostDto) => {
     setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
@@ -193,43 +206,76 @@ export const PostsFeedPage: React.FC = () => {
 
       {/* Filter and Sort Toolbar */}
       <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-wassal-border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Type Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-          <button
-            type="button"
-            onClick={() => handleTypeChange('ALL')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-              selectedType === 'ALL'
-                ? 'bg-wassal-plum text-white shadow-xs'
-                : 'bg-wassal-bg text-wassal-slate hover:text-wassal-plum'
-            }`}
-          >
-            Tous les posts
-          </button>
-          <button
-            type="button"
-            onClick={() => handleTypeChange('REGULAR')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-              selectedType === 'REGULAR'
-                ? 'bg-wassal-green-ink text-white shadow-xs'
-                : 'bg-wassal-bg text-wassal-slate hover:text-wassal-green-ink'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Discussions</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleTypeChange('POLL')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-              selectedType === 'POLL'
-                ? 'bg-amber-600 text-white shadow-xs'
-                : 'bg-wassal-bg text-wassal-slate hover:text-amber-700'
-            }`}
-          >
-            <BarChart2 className="w-3.5 h-3.5" />
-            <span>Sondages</span>
-          </button>
+        {/* Left Side: Feed Mode + Type Tabs */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Active vs Archived Toggle */}
+          <div className="flex items-center gap-1 bg-wassal-bg/80 p-1 rounded-xl border border-wassal-border shrink-0">
+            <button
+              type="button"
+              onClick={() => handleArchivedToggle(false)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                !archivedFeed
+                  ? 'bg-white text-wassal-plum shadow-xs'
+                  : 'text-wassal-slate hover:text-wassal-plum'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-wassal-green-ink" />
+              <span>Actifs</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleArchivedToggle(true)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                archivedFeed
+                  ? 'bg-slate-700 text-white shadow-xs'
+                  : 'text-wassal-slate hover:text-wassal-plum'
+              }`}
+            >
+              <Archive className="w-3.5 h-3.5" />
+              <span>Archives</span>
+            </button>
+          </div>
+
+          <div className="h-5 w-[1px] bg-wassal-border hidden sm:block" />
+
+          {/* Type Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            <button
+              type="button"
+              onClick={() => handleTypeChange('ALL')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                selectedType === 'ALL'
+                  ? 'bg-wassal-plum text-white shadow-xs'
+                  : 'bg-wassal-bg text-wassal-slate hover:text-wassal-plum'
+              }`}
+            >
+              Tous les posts
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeChange('REGULAR')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                selectedType === 'REGULAR'
+                  ? 'bg-wassal-green-ink text-white shadow-xs'
+                  : 'bg-wassal-bg text-wassal-slate hover:text-wassal-green-ink'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Discussions</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeChange('POLL')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                selectedType === 'POLL'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'bg-wassal-bg text-wassal-slate hover:text-amber-700'
+              }`}
+            >
+              <BarChart2 className="w-3.5 h-3.5" />
+              <span>Sondages</span>
+            </button>
+          </div>
         </div>
 
         {/* Sort Controls */}
@@ -261,6 +307,16 @@ export const PostsFeedPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Notice when viewing archives */}
+      {archivedFeed && (
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-3 text-xs text-slate-700">
+          <Archive className="w-5 h-5 text-slate-500 shrink-0" />
+          <p>
+            Vous consultez les <strong>archives historiques</strong> des éditions antérieures de la Caravane. Ces publications sont conservées pour mémoire.
+          </p>
+        </div>
+      )}
+
       {/* Feed List */}
       {isInitialLoading ? (
         <div className="flex flex-col items-center justify-center py-16 text-wassal-slate space-y-3">
@@ -270,21 +326,25 @@ export const PostsFeedPage: React.FC = () => {
       ) : posts.length === 0 ? (
         <div className="bg-white rounded-2xl border border-wassal-border p-12 text-center space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-wassal-plum/5 text-wassal-plum flex items-center justify-center mx-auto">
-            <MessageSquare className="w-6 h-6" />
+            {archivedFeed ? <Archive className="w-6 h-6 text-slate-500" /> : <MessageSquare className="w-6 h-6" />}
           </div>
           <h3 className="text-base font-bold text-wassal-plum font-heading">
-            Aucune publication trouvée
+            {archivedFeed ? 'Aucune publication archivée' : 'Aucune publication trouvée'}
           </h3>
           <p className="text-xs sm:text-sm text-wassal-slate max-w-sm mx-auto">
-            Soyez le premier à lancer une discussion ou à publier un sondage pour recueillir les avis des membres !
+            {archivedFeed
+              ? "Aucune publication archivée des éditions passées n'a été trouvée pour les critères sélectionnés."
+              : 'Soyez le premier à lancer une discussion ou à publier un sondage pour recueillir les avis des membres !'}
           </p>
-          <Button
-            size="sm"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="mt-2 bg-wassal-green-ink text-white font-semibold rounded-xl"
-          >
-            Créer une publication
-          </Button>
+          {!archivedFeed && (
+            <Button
+              size="sm"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="mt-2 bg-wassal-green-ink text-white font-semibold rounded-xl"
+            >
+              Créer une publication
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-4">

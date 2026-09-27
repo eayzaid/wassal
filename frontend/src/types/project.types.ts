@@ -17,6 +17,8 @@ export interface ProjectPublicDto {
   createdBy?: string;
   status: ProjectStatus;
   editionNumber: number;
+  isArchived?: boolean;
+  archived?: boolean;
   tasks: TaskPublicDto[];
 }
 
@@ -69,6 +71,8 @@ export interface TaskPublicDto {
   minRequiredMembers: number;
   status: TaskStatus;
   editionNumber: number;
+  isArchived?: boolean;
+  archived?: boolean;
   createdAt: string;
   updatedAt: string;
   activeMembers: TaskMemberDto[];
