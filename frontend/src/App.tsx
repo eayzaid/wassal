@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { Toaster } from './components/ui/toaster';
 import { AppRoutes } from './routes/AppRoutes';
 
 export const App: React.FC = () => {
@@ -10,6 +11,7 @@ export const App: React.FC = () => {
       <ToastProvider>
         <AuthProvider>
           <AppRoutes />
+          <Toaster />
         </AuthProvider>
       </ToastProvider>
     </BrowserRouter>
