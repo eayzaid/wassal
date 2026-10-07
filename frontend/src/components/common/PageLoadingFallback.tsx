@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 export const PageLoadingFallback: React.FC = () => {
   return (
     <div
-      className="min-h-[50vh] w-full flex flex-col items-center justify-center p-8 text-wassal-slate space-y-3 animate-in fade-in duration-150"
+      className="flex-1 w-full min-h-[50vh] flex flex-col items-center justify-center p-8 text-wassal-slate space-y-3 animate-in fade-in duration-150"
       aria-busy="true"
       aria-label="Chargement de la page"
     >

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { PageLoadingFallback } from '../components/common/PageLoadingFallback';
 
 export const PublicRoute: React.FC = () => {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
@@ -20,5 +21,9 @@ export const PublicRoute: React.FC = () => {
     return <Navigate to={isAdmin ? '/admin/members' : '/profile'} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <Suspense fallback={<PageLoadingFallback />}>
+      <Outlet />
+    </Suspense>
+  );
 };

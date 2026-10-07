@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export const LeaderboardPage: React.FC = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isAdmin } = useAuth();
   const toast = useToast();
 
   const [entries, setEntries] = useState<LeaderboardEntryDto[]>([]);
@@ -45,7 +45,14 @@ export const LeaderboardPage: React.FC = () => {
     fetchLeaderboard();
   }, [fetchLeaderboard]);
 
+  // CSV export is restricted to Admin tier (PRESIDENT, VICE_PRESIDENT, RH). Forbidden for MEMBER and TEAM_LEADER.
+  const canExportCsv = isAdmin;
+
   const handleExportCsv = async () => {
+    if (!canExportCsv) {
+      toast.error("Vous n'êtes pas autorisé à télécharger ce fichier.");
+      return;
+    }
     setIsExporting(true);
     try {
       await leaderboardApi.downloadUsersPointsCsv();
@@ -108,21 +115,23 @@ export const LeaderboardPage: React.FC = () => {
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
 
-          <Button
-            variant="default"
-            size="default"
-            onClick={handleExportCsv}
-            disabled={isExporting}
-            className="h-10 px-4 gap-2 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white font-bold shadow-sm rounded-xl transition-all"
-            title="Télécharger l'export CSV complet des points"
-          >
-            {isExporting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
-            <span>Exporter les points (CSV)</span>
-          </Button>
+          {canExportCsv && (
+            <Button
+              variant="default"
+              size="default"
+              onClick={handleExportCsv}
+              disabled={isExporting}
+              className="h-10 px-4 gap-2 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white font-bold shadow-sm rounded-xl transition-all"
+              title="Télécharger l'export CSV complet des points"
+            >
+              {isExporting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              <span>Exporter les points (CSV)</span>
+            </Button>
+          )}
         </div>
       </div>
 

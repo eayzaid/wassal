@@ -34,7 +34,7 @@ import { AxiosError } from 'axios';
 import { ErrorResponse } from '../../types';
 
 export const MemberDirectoryPage: React.FC = () => {
-  const { user: currentUser, refreshUser } = useAuth();
+  const { user: currentUser, refreshUser, isAdmin } = useAuth();
   const toast = useToast();
 
   const [members, setMembers] = useState<UserSummaryDto[]>([]);
@@ -69,6 +69,10 @@ export const MemberDirectoryPage: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExportCsv = async () => {
+    if (!isAdmin) {
+      toast.error("Vous n'êtes pas autorisé à télécharger ce fichier.");
+      return;
+    }
     setIsExporting(true);
     try {
       await leaderboardApi.downloadAdminUsersPointsCsv();
@@ -277,16 +281,18 @@ export const MemberDirectoryPage: React.FC = () => {
               <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
               <span>Actualiser</span>
             </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleExportCsv}
-              disabled={isExporting}
-              className="text-xs h-9 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white font-semibold"
-            >
-              <Download className={`w-3.5 h-3.5 mr-1.5 ${isExporting ? 'animate-spin' : ''}`} />
-              <span>Exporter points (CSV)</span>
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleExportCsv}
+                disabled={isExporting}
+                className="text-xs h-9 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white font-semibold"
+              >
+                <Download className={`w-3.5 h-3.5 mr-1.5 ${isExporting ? 'animate-spin' : ''}`} />
+                <span>Exporter points (CSV)</span>
+              </Button>
+            )}
           </div>
         }
       />

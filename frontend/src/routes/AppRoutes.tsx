@@ -61,39 +61,44 @@ const RootRedirect: React.FC = () => {
 
 export const AppRoutes: React.FC = () => {
   return (
-    <Suspense fallback={<PageLoadingFallback />}>
-      <Routes>
-        {/* Public routes */}
-        <Route element={<PublicRoute />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-        </Route>
+    <Routes>
+      {/* Public routes */}
+      <Route element={<PublicRoute />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+      </Route>
 
-        {/* Protected routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<RootRedirect />} />
-            <Route path="/projects" element={<ProjectsListPage />} />
-            <Route path="/projects/:id" element={<ProjectDetailPage />} />
-            <Route path="/tasks" element={<TasksListPage />} />
-            <Route path="/leaderboard" element={<LeaderboardPage />} />
-            <Route path="/posts" element={<PostsFeedPage />} />
-            <Route path="/posts/:id" element={<PostDetailPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
+      {/* Protected routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<RootRedirect />} />
+          <Route path="/projects" element={<ProjectsListPage />} />
+          <Route path="/projects/:id" element={<ProjectDetailPage />} />
+          <Route path="/tasks" element={<TasksListPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/posts" element={<PostsFeedPage />} />
+          <Route path="/posts/:id" element={<PostDetailPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
 
-            {/* Admin routes */}
-            <Route element={<AdminRoute />}>
-              <Route path="/admin/members" element={<MemberDirectoryPage />} />
-              <Route path="/admin/pending" element={<PendingApprovalsPage />} />
-            </Route>
+          {/* Admin routes */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin/members" element={<MemberDirectoryPage />} />
+            <Route path="/admin/pending" element={<PendingApprovalsPage />} />
           </Route>
         </Route>
+      </Route>
 
-        {/* 404 */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Suspense>
+      {/* 404 */}
+      <Route
+        path="*"
+        element={
+          <Suspense fallback={<PageLoadingFallback />}>
+            <NotFoundPage />
+          </Suspense>
+        }
+      />
+    </Routes>
   );
 };
