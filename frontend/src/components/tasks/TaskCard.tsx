@@ -110,28 +110,28 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Metadata info row */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] sm:text-xs text-wassal-slate pt-2.5 border-t border-wassal-border/50">
+        <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-wassal-slate pt-2.5 border-t border-wassal-border/50">
           <span className="inline-flex items-center gap-1.5 shrink-0">
             <Users className="w-3.5 h-3.5 text-wassal-slate shrink-0" />
             <span>
-              {memberCount} / {task.minRequiredMembers} membre{memberCount > 1 ? 's' : ''}
+              {memberCount} / {task.minRequiredMembers} bénévole{task.minRequiredMembers > 1 ? 's' : ''}
             </span>
+          </span>
+
+          <span className="inline-flex items-center gap-1 text-wassal-slate shrink-0 justify-end sm:justify-start">
+            <Calendar className="w-3.5 h-3.5 shrink-0" />
+            <span>{formattedDate}</span>
           </span>
 
           {(task.ownerName || task.createdBy) && (
             <span
-              className="inline-flex items-center gap-1 text-wassal-slate truncate max-w-[140px] sm:max-w-[180px]"
+              className="col-span-2 sm:col-span-1 inline-flex items-center gap-1 text-wassal-slate truncate max-w-full sm:max-w-[180px]"
               title={`Créée par ${task.ownerName || task.createdBy}`}
             >
               <User className="w-3.5 h-3.5 text-wassal-slate shrink-0" />
               <span className="truncate">Par {task.ownerName || task.createdBy}</span>
             </span>
           )}
-
-          <span className="inline-flex items-center gap-1 text-wassal-slate shrink-0">
-            <Calendar className="w-3.5 h-3.5 shrink-0" />
-            <span>{formattedDate}</span>
-          </span>
         </div>
       </div>
 

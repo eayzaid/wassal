@@ -361,19 +361,19 @@ export const TasksListPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-3 sm:space-y-4 max-w-7xl mx-auto pb-8 sm:pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-        <div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-heading text-wassal-plum tracking-tight">
             Tâches & Collectes
           </h1>
-          <p className="text-xs sm:text-sm text-wassal-slate mt-0.5">
-            Missions de terrain, logistique et collectes de dons de Caravane El Hayat
+          <p className="text-xs sm:text-sm text-wassal-slate mt-0.5 truncate">
+            Missions de terrain, logistique et collectes de dons
           </p>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
@@ -382,7 +382,7 @@ export const TasksListPage: React.FC = () => {
               fetchCounts();
             }}
             disabled={isLoading}
-            className="h-10 text-wassal-slate hover:text-wassal-plum shrink-0"
+            className="h-9 w-9 p-0 text-wassal-slate hover:text-wassal-plum rounded-xl border-wassal-border shrink-0"
             title="Actualiser"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -391,77 +391,78 @@ export const TasksListPage: React.FC = () => {
           {canCreateTask(user?.role) && (
             <Button
               variant="default"
-              size="default"
+              size="sm"
               onClick={() => setIsCreateTaskOpen(true)}
-              className="flex-1 sm:flex-initial h-10 px-4 gap-2 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white font-bold shadow-sm rounded-xl"
+              className="h-9 px-3 sm:px-4 gap-1.5 sm:gap-2 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white font-bold shadow-sm rounded-xl text-xs sm:text-sm"
             >
               <Plus className="w-4 h-4 shrink-0" />
-              <span>Nouvelle Tâche</span>
+              <span className="hidden xs:inline">Nouvelle</span>
+              <span>Tâche</span>
             </Button>
           )}
         </div>
       </div>
 
-      {/* Main Tabs Navigation */}
-      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1.5 border-b border-wassal-border -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-none">
+      {/* Main Tabs Navigation (Pill Chips) */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-none select-none">
         <button
           type="button"
           onClick={() => handleTabChange('ALL')}
-          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 ${
+          className={`px-3.5 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
             currentTab === 'ALL'
-              ? 'border-wassal-plum text-wassal-plum bg-wassal-plum/5'
-              : 'border-transparent text-wassal-slate hover:text-wassal-plum'
+              ? 'bg-wassal-plum text-white shadow-xs'
+              : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-bg'
           }`}
         >
-          <ListTodo className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <ListTodo className="w-3.5 h-3.5 shrink-0" />
           <span>Toutes ({counts.all})</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('MY_TASKS')}
-          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 ${
+          className={`px-3.5 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
             currentTab === 'MY_TASKS'
-              ? 'border-wassal-plum text-wassal-plum bg-wassal-plum/5'
-              : 'border-transparent text-wassal-slate hover:text-wassal-plum'
+              ? 'bg-wassal-plum text-white shadow-xs'
+              : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-bg'
           }`}
         >
-          <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <UserCheck className="w-3.5 h-3.5 shrink-0" />
           <span>Mes affectations ({counts.myTasks})</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('PENDING')}
-          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 ${
+          className={`px-3.5 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
             currentTab === 'PENDING'
-              ? 'border-amber-600 text-amber-700 bg-amber-50/50'
-              : 'border-transparent text-wassal-slate hover:text-amber-700'
+              ? 'bg-amber-600 text-white shadow-xs'
+              : 'bg-white text-wassal-slate border border-wassal-border hover:bg-amber-50'
           }`}
         >
-          <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <Clock className="w-3.5 h-3.5 shrink-0" />
           <span>À valider ({counts.pending})</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('DONE')}
-          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 ${
+          className={`px-3.5 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
             currentTab === 'DONE'
-              ? 'border-wassal-green-ink text-wassal-green-ink bg-wassal-green/5'
-              : 'border-transparent text-wassal-slate hover:text-wassal-green-ink'
+              ? 'bg-wassal-green-ink text-white shadow-xs'
+              : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-green/10'
           }`}
         >
-          <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
           <span>Achevées ({counts.done})</span>
         </button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-wassal-border space-y-3 shadow-xs">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 sm:gap-3">
+      {/* Filter and Search Bar (Compact Mobile-First 2-row layout) */}
+      <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-wassal-border space-y-2.5 shadow-2xs">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5">
           {/* Search bar */}
-          <div className="relative sm:col-span-2 lg:col-span-6">
+          <div className="relative lg:col-span-6">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-wassal-slate pointer-events-none">
               {isDebouncing || isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin text-wassal-green-ink" />
@@ -474,8 +475,8 @@ export const TasksListPage: React.FC = () => {
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               onKeyDown={handleSearchKeyDown}
-              placeholder="Rechercher par intitulé, description..."
-              className="w-full pl-9 pr-9 h-10 text-xs sm:text-sm rounded-xl border border-wassal-border bg-wassal-bg/30 focus:outline-none focus:ring-2 focus:ring-wassal-green focus:bg-white transition-all"
+              placeholder="Rechercher une mission, description..."
+              className="w-full pl-9 pr-9 h-9 sm:h-10 text-xs sm:text-sm rounded-xl border border-wassal-border bg-wassal-bg/30 focus:outline-none focus:ring-2 focus:ring-wassal-green focus:bg-white transition-all"
             />
             {searchQuery && (
               <button
@@ -489,50 +490,51 @@ export const TasksListPage: React.FC = () => {
             )}
           </div>
 
-          {/* Type Filter */}
-          <div className="lg:col-span-3">
-            <Select
-              value={typeFilter}
-              onValueChange={(val) => handleTypeChange(val as 'ALL' | TaskType)}
-            >
-              <SelectTrigger className="w-full h-10 px-3 text-xs sm:text-sm rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green">
-                <SelectValue placeholder="Tous types de tâche" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tous types de tâche</SelectItem>
-                <SelectItem value="TASK">Tâches opérationnelles</SelectItem>
-                <SelectItem value="COLLECTION">Campagnes de collecte</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Type and Project Filters side by side on mobile! */}
+          <div className="grid grid-cols-2 gap-2 lg:col-span-6 lg:gap-2.5">
+            <div>
+              <Select
+                value={typeFilter}
+                onValueChange={(val) => handleTypeChange(val as 'ALL' | TaskType)}
+              >
+                <SelectTrigger className="w-full h-9 sm:h-10 px-2.5 sm:px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green truncate">
+                  <SelectValue placeholder="Tous types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Tous types</SelectItem>
+                  <SelectItem value="TASK">Mission terrain</SelectItem>
+                  <SelectItem value="COLLECTION">Collecte</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Project Filter */}
-          <div className="lg:col-span-3">
-            <Select
-              value={String(selectedProjectId)}
-              onValueChange={(val) =>
-                handleProjectChange(val === 'ALL' ? 'ALL' : Number(val))
-              }
-            >
-              <SelectTrigger className="w-full h-10 px-3 text-xs sm:text-sm rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green">
-                <SelectValue placeholder="Tous les projets" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tous les projets</SelectItem>
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)}>
-                    {p.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div>
+              <Select
+                value={String(selectedProjectId)}
+                onValueChange={(val) =>
+                  handleProjectChange(val === 'ALL' ? 'ALL' : Number(val))
+                }
+              >
+                <SelectTrigger className="w-full h-9 sm:h-10 px-2.5 sm:px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green truncate">
+                  <SelectValue placeholder="Tous projets" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Tous les projets</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Tasks Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4.5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
