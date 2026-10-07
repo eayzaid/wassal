@@ -62,10 +62,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const memberCount = task.activeMembers?.length ?? 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-wassal-border p-4 sm:p-5 hover:shadow-md transition-all flex flex-col justify-between">
-      <div>
+    <div className="bg-white rounded-2xl border border-wassal-border p-3.5 sm:p-5 hover:shadow-md transition-all flex flex-col justify-between w-full min-w-0 max-w-full overflow-hidden">
+      <div className="w-full min-w-0">
         {/* Top Badges */}
-        <div className="flex items-start sm:items-center justify-between gap-2 mb-2.5">
+        <div className="flex items-start sm:items-center justify-between gap-2 mb-2.5 w-full min-w-0">
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
             <TaskStatusBadge status={task.status} size="sm" />
             <TaskTypeBadge type={task.type} size="sm" />
@@ -86,7 +86,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Project Context */}
-        <div className="mb-2">
+        <div className="mb-2 w-full min-w-0">
           {task.projectId ? (
             <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-wassal-slate bg-wassal-bg px-2 py-0.5 rounded-md max-w-full truncate">
               <Briefcase className="w-3 h-3 shrink-0" />
@@ -100,7 +100,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Title & Description */}
-        <div className="mb-3">
+        <div className="mb-3 w-full min-w-0">
           <h4 className="text-base font-bold text-wassal-plum leading-snug break-words">
             {task.name}
           </h4>
@@ -110,22 +110,22 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Metadata info row */}
-        <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-wassal-slate pt-2.5 border-t border-wassal-border/50">
-          <span className="inline-flex items-center gap-1.5 shrink-0">
+        <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-wassal-slate pt-2.5 border-t border-wassal-border/50 w-full min-w-0">
+          <span className="inline-flex items-center gap-1.5 min-w-0 truncate">
             <Users className="w-3.5 h-3.5 text-wassal-slate shrink-0" />
-            <span>
+            <span className="truncate">
               {memberCount} / {task.minRequiredMembers} bénévole{task.minRequiredMembers > 1 ? 's' : ''}
             </span>
           </span>
 
-          <span className="inline-flex items-center gap-1 text-wassal-slate shrink-0 justify-end sm:justify-start">
+          <span className="inline-flex items-center gap-1 text-wassal-slate min-w-0 justify-end sm:justify-start">
             <Calendar className="w-3.5 h-3.5 shrink-0" />
-            <span>{formattedDate}</span>
+            <span className="truncate">{formattedDate}</span>
           </span>
 
           {(task.ownerName || task.createdBy) && (
             <span
-              className="col-span-2 sm:col-span-1 inline-flex items-center gap-1 text-wassal-slate truncate max-w-full sm:max-w-[180px]"
+              className="col-span-2 sm:col-span-1 inline-flex items-center gap-1 text-wassal-slate truncate w-full sm:max-w-[180px]"
               title={`Créée par ${task.ownerName || task.createdBy}`}
             >
               <User className="w-3.5 h-3.5 text-wassal-slate shrink-0" />

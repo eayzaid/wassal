@@ -361,11 +361,11 @@ export const TasksListPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3 sm:space-y-4 max-w-7xl mx-auto pb-8 sm:pb-12">
+    <div className="space-y-3 sm:space-y-4 max-w-7xl mx-auto pb-8 sm:pb-12 w-full min-w-0 max-w-full">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-heading text-wassal-plum tracking-tight">
+      <div className="flex items-center justify-between gap-3 w-full min-w-0">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-heading text-wassal-plum tracking-tight truncate">
             Tâches & Collectes
           </h1>
           <p className="text-xs sm:text-sm text-wassal-slate mt-0.5 truncate">
@@ -393,7 +393,7 @@ export const TasksListPage: React.FC = () => {
               variant="default"
               size="sm"
               onClick={() => setIsCreateTaskOpen(true)}
-              className="h-9 px-3 sm:px-4 gap-1.5 sm:gap-2 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white font-bold shadow-sm rounded-xl text-xs sm:text-sm"
+              className="h-9 px-3 sm:px-4 gap-1.5 sm:gap-2 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white font-bold shadow-sm rounded-xl text-xs sm:text-sm shrink-0"
             >
               <Plus className="w-4 h-4 shrink-0" />
               <span className="hidden xs:inline">Nouvelle</span>
@@ -403,66 +403,68 @@ export const TasksListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Tabs Navigation (Pill Chips) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-none select-none">
-        <button
-          type="button"
-          onClick={() => handleTabChange('ALL')}
-          className={`px-3.5 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
-            currentTab === 'ALL'
-              ? 'bg-wassal-plum text-white shadow-xs'
-              : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-bg'
-          }`}
-        >
-          <ListTodo className="w-3.5 h-3.5 shrink-0" />
-          <span>Toutes ({counts.all})</span>
-        </button>
+      {/* Main Tabs Navigation (Pill Chips - Contained Touch Scroll) */}
+      <div className="w-full max-w-full min-w-0 overflow-x-auto pb-1 scrollbar-none select-none touch-pan-x">
+        <div className="inline-flex items-center gap-1.5 sm:gap-2 min-w-max px-0.5">
+          <button
+            type="button"
+            onClick={() => handleTabChange('ALL')}
+            className={`px-3 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
+              currentTab === 'ALL'
+                ? 'bg-wassal-plum text-white shadow-xs'
+                : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-bg'
+            }`}
+          >
+            <ListTodo className="w-3.5 h-3.5 shrink-0" />
+            <span>Toutes ({counts.all})</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => handleTabChange('MY_TASKS')}
-          className={`px-3.5 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
-            currentTab === 'MY_TASKS'
-              ? 'bg-wassal-plum text-white shadow-xs'
-              : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-bg'
-          }`}
-        >
-          <UserCheck className="w-3.5 h-3.5 shrink-0" />
-          <span>Mes affectations ({counts.myTasks})</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange('MY_TASKS')}
+            className={`px-3 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
+              currentTab === 'MY_TASKS'
+                ? 'bg-wassal-plum text-white shadow-xs'
+                : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-bg'
+            }`}
+          >
+            <UserCheck className="w-3.5 h-3.5 shrink-0" />
+            <span>Mes missions ({counts.myTasks})</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => handleTabChange('PENDING')}
-          className={`px-3.5 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
-            currentTab === 'PENDING'
-              ? 'bg-amber-600 text-white shadow-xs'
-              : 'bg-white text-wassal-slate border border-wassal-border hover:bg-amber-50'
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5 shrink-0" />
-          <span>À valider ({counts.pending})</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange('PENDING')}
+            className={`px-3 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
+              currentTab === 'PENDING'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'bg-white text-wassal-slate border border-wassal-border hover:bg-amber-50'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5 shrink-0" />
+            <span>À valider ({counts.pending})</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => handleTabChange('DONE')}
-          className={`px-3.5 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
-            currentTab === 'DONE'
-              ? 'bg-wassal-green-ink text-white shadow-xs'
-              : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-green/10'
-          }`}
-        >
-          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-          <span>Achevées ({counts.done})</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange('DONE')}
+            className={`px-3 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
+              currentTab === 'DONE'
+                ? 'bg-wassal-green-ink text-white shadow-xs'
+                : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-green/10'
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+            <span>Achevées ({counts.done})</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar (Compact Mobile-First 2-row layout) */}
-      <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-wassal-border space-y-2.5 shadow-2xs">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5">
+      <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-wassal-border space-y-2.5 shadow-2xs w-full min-w-0 max-w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5 w-full min-w-0">
           {/* Search bar */}
-          <div className="relative lg:col-span-6">
+          <div className="relative lg:col-span-6 w-full min-w-0">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-wassal-slate pointer-events-none">
               {isDebouncing || isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin text-wassal-green-ink" />
@@ -491,13 +493,13 @@ export const TasksListPage: React.FC = () => {
           </div>
 
           {/* Type and Project Filters side by side on mobile! */}
-          <div className="grid grid-cols-2 gap-2 lg:col-span-6 lg:gap-2.5">
-            <div>
+          <div className="grid grid-cols-2 gap-2 lg:col-span-6 lg:gap-2.5 w-full min-w-0">
+            <div className="min-w-0 w-full">
               <Select
                 value={typeFilter}
                 onValueChange={(val) => handleTypeChange(val as 'ALL' | TaskType)}
               >
-                <SelectTrigger className="w-full h-9 sm:h-10 px-2.5 sm:px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green truncate">
+                <SelectTrigger className="w-full min-w-0 h-9 sm:h-10 px-2.5 sm:px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green truncate">
                   <SelectValue placeholder="Tous types" />
                 </SelectTrigger>
                 <SelectContent>
@@ -508,14 +510,14 @@ export const TasksListPage: React.FC = () => {
               </Select>
             </div>
 
-            <div>
+            <div className="min-w-0 w-full">
               <Select
                 value={String(selectedProjectId)}
                 onValueChange={(val) =>
                   handleProjectChange(val === 'ALL' ? 'ALL' : Number(val))
                 }
               >
-                <SelectTrigger className="w-full h-9 sm:h-10 px-2.5 sm:px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green truncate">
+                <SelectTrigger className="w-full min-w-0 h-9 sm:h-10 px-2.5 sm:px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green truncate">
                   <SelectValue placeholder="Tous projets" />
                 </SelectTrigger>
                 <SelectContent>
@@ -534,11 +536,11 @@ export const TasksListPage: React.FC = () => {
 
       {/* Tasks Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4.5 w-full min-w-0">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl border border-wassal-border p-5 h-60 animate-pulse flex flex-col justify-between"
+              className="bg-white rounded-2xl border border-wassal-border p-5 h-60 animate-pulse flex flex-col justify-between w-full min-w-0"
             >
               <div className="space-y-3">
                 <div className="h-5 bg-gray-200 rounded w-1/3" />
@@ -550,7 +552,7 @@ export const TasksListPage: React.FC = () => {
           ))}
         </div>
       ) : tasks.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-wassal-border p-8 sm:p-12 text-center max-w-md mx-auto my-6 sm:my-8">
+        <div className="bg-white rounded-2xl border border-dashed border-wassal-border p-8 sm:p-12 text-center max-w-md mx-auto my-6 sm:my-8 w-full min-w-0">
           <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-2xl bg-wassal-bg flex items-center justify-center text-wassal-slate mb-3">
             <ListTodo className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
@@ -575,7 +577,7 @@ export const TasksListPage: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5 w-full min-w-0">
           {tasks.map((task) => (
             <TaskCard
               key={task.id}

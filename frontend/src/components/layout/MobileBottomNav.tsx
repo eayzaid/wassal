@@ -30,7 +30,7 @@ export const MobileBottomNav: React.FC = () => {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-wassal-surface/95 backdrop-blur-md border-t border-wassal-border shadow-lg pb-[env(safe-area-inset-bottom)]"
+      className="lg:hidden fixed bottom-0 left-0 right-0 w-full max-w-full z-40 bg-wassal-surface/95 backdrop-blur-md border-t border-wassal-border shadow-lg pb-[env(safe-area-inset-bottom)]"
       aria-label="Navigation principale mobile"
     >
       <div className="flex items-center justify-around h-16 px-1">
