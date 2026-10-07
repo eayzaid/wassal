@@ -113,17 +113,17 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
         <DialogHeader>
           <div className="flex items-center gap-2.5 text-wassal-plum">
             <div className="w-9 h-9 rounded-xl bg-wassal-sage/20 flex items-center justify-center shrink-0 text-wassal-sage-deep">
               <CheckSquare className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle>
+              <DialogTitle className="text-base sm:text-lg">
                 {projectId ? `Ajouter une mission au projet` : `Nouvelle Mission Autonome`}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-xs">
                 {projectId && projectTitle
                   ? `Projet : ${projectTitle}`
                   : `Créez une mission ou une collecte pour mobiliser les bénévoles`}
@@ -135,7 +135,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         {errorMessage && (
           <Alert variant="destructive" className="py-2.5">
             <AlertCircle className="w-4 h-4" />
-            <AlertDescription>{errorMessage}</AlertDescription>
+            <AlertDescription className="text-xs">{errorMessage}</AlertDescription>
           </Alert>
         )}
 
@@ -162,7 +162,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-wassal-plum">Type d'opération</Label>
               <Select value={type} onValueChange={(val) => setType(val as TaskType)}>
-                <SelectTrigger className="h-11 sm:h-10 text-xs">
+                <SelectTrigger className="h-10 text-xs rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -190,7 +190,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 required
                 value={points}
                 onChange={(e) => setPoints(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-full h-11 sm:h-10 px-3 text-xs rounded-xl border border-wassal-border bg-wassal-surface text-wassal-ink focus:outline-none focus:ring-2 focus:ring-wassal-green/40 focus:border-wassal-green-ink transition font-mono"
+                className="w-full h-10 px-3 text-xs rounded-xl border border-wassal-border bg-wassal-surface text-wassal-ink focus:outline-none focus:ring-2 focus:ring-wassal-green/40 focus:border-wassal-green-ink transition font-mono"
               />
             </div>
 
@@ -202,19 +202,19 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 required
                 value={minRequiredMembers}
                 onChange={(e) => setMinRequiredMembers(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full h-11 sm:h-10 px-3 text-xs rounded-xl border border-wassal-border bg-wassal-surface text-wassal-ink focus:outline-none focus:ring-2 focus:ring-wassal-green/40 focus:border-wassal-green-ink transition font-mono"
+                className="w-full h-10 px-3 text-xs rounded-xl border border-wassal-border bg-wassal-surface text-wassal-ink focus:outline-none focus:ring-2 focus:ring-wassal-green/40 focus:border-wassal-green-ink transition font-mono"
               />
             </div>
           </div>
 
-          <DialogFooter className="pt-2">
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
               size="default"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="w-full sm:w-auto h-11 sm:h-9"
+              className="w-full sm:w-auto h-10 sm:h-9 rounded-xl"
             >
               Annuler
             </Button>
@@ -222,7 +222,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               type="submit"
               size="default"
               isLoading={isSubmitting}
-              className="w-full sm:w-auto h-11 sm:h-9 gap-2 bg-wassal-green text-wassal-plum hover:bg-wassal-green/90 font-semibold"
+              className="w-full sm:w-auto h-10 sm:h-9 gap-2 bg-wassal-green text-wassal-plum hover:bg-wassal-green/90 font-semibold rounded-xl"
             >
               <CheckSquare className="w-4 h-4" />
               <span>Créer la mission</span>

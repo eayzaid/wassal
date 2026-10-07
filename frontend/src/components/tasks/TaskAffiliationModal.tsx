@@ -312,7 +312,7 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col p-4 sm:p-6 overflow-hidden">
+      <DialogContent className="sm:max-w-xl w-[95vw] sm:w-full max-h-[90vh] flex flex-col p-3.5 sm:p-6 overflow-hidden rounded-2xl">
         <DialogHeader className="shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-wassal-plum/10 flex items-center justify-center text-wassal-plum shrink-0">
@@ -322,7 +322,7 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
               <DialogTitle className="text-base sm:text-lg">
                 {canManage ? 'Gestion des Bénévoles' : 'Équipe de la Mission'}
               </DialogTitle>
-              <DialogDescription className="text-xs truncate max-w-sm sm:max-w-md">
+              <DialogDescription className="text-xs truncate max-w-[200px] sm:max-w-md">
                 Mission : <span className="font-semibold text-wassal-plum">{task.name}</span>
               </DialogDescription>
             </div>
@@ -399,23 +399,23 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
             onValueChange={(val) => setActiveTab(val as 'members' | 'requests' | 'assign')}
             className="flex-1 flex flex-col min-h-0 pt-2"
           >
-          <TabsList className="grid grid-cols-3 mb-3 shrink-0 h-11 sm:h-10">
-            <TabsTrigger value="members" className="gap-1.5 text-xs py-2">
-              <Users className="w-3.5 h-3.5" />
-              <span>Équipe ({activeMembers.length})</span>
+          <TabsList className="grid grid-cols-3 mb-3 shrink-0 h-10">
+            <TabsTrigger value="members" className="gap-1 sm:gap-1.5 text-[11px] sm:text-xs py-1.5 sm:py-2 px-1 sm:px-2.5">
+              <Users className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Équipe ({activeMembers.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="requests" className="gap-1.5 text-xs py-2 relative">
-              <Clock className="w-3.5 h-3.5" />
-              <span>Demandes</span>
+            <TabsTrigger value="requests" className="gap-1 sm:gap-1.5 text-[11px] sm:text-xs py-1.5 sm:py-2 px-1 sm:px-2.5 relative">
+              <Clock className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Demandes</span>
               {requests.length > 0 && (
                 <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                   {requests.length}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="assign" disabled={isTaskDone} className="gap-1.5 text-xs py-2">
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>Affecter</span>
+            <TabsTrigger value="assign" disabled={isTaskDone} className="gap-1 sm:gap-1.5 text-[11px] sm:text-xs py-1.5 sm:py-2 px-1 sm:px-2.5">
+              <UserPlus className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Affecter</span>
             </TabsTrigger>
           </TabsList>
 
@@ -529,7 +529,7 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                  <div className="w-full sm:w-auto flex items-center gap-2 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-amber-200/60 shrink-0">
                     <Button
                       type="button"
                       variant="outline"
@@ -538,7 +538,7 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
                       onClick={() =>
                         handleDecision(r.id, 'DECLINE', `${r.requester.firstName} ${r.requester.lastName}`)
                       }
-                      className="h-8 px-2.5 text-xs text-wassal-wine border-rose-200 hover:bg-rose-50 gap-1"
+                      className="flex-1 sm:flex-initial h-8 px-2.5 text-xs text-wassal-wine border-rose-200 hover:bg-rose-50 gap-1 rounded-lg"
                     >
                       <X className="w-3.5 h-3.5" />
                       <span>Refuser</span>
@@ -550,7 +550,7 @@ export const TaskAffiliationModal: React.FC<TaskAffiliationModalProps> = ({
                       onClick={() =>
                         handleDecision(r.id, 'APPROVE', `${r.requester.firstName} ${r.requester.lastName}`)
                       }
-                      className="h-8 px-2.5 text-xs bg-wassal-green text-wassal-plum hover:bg-wassal-green/90 font-bold gap-1"
+                      className="flex-1 sm:flex-initial h-8 px-2.5 text-xs bg-wassal-green text-wassal-plum hover:bg-wassal-green/90 font-bold gap-1 rounded-lg"
                     >
                       <Check className="w-3.5 h-3.5" />
                       <span>Valider</span>

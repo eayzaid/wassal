@@ -363,9 +363,9 @@ export const TasksListPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-wassal-plum tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-heading text-wassal-plum tracking-tight">
             Tâches & Collectes
           </h1>
           <p className="text-xs sm:text-sm text-wassal-slate mt-0.5">
@@ -373,7 +373,7 @@ export const TasksListPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
           <Button
             variant="outline"
             size="sm"
@@ -382,7 +382,7 @@ export const TasksListPage: React.FC = () => {
               fetchCounts();
             }}
             disabled={isLoading}
-            className="h-10 text-wassal-slate hover:text-wassal-plum"
+            className="h-10 text-wassal-slate hover:text-wassal-plum shrink-0"
             title="Actualiser"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -393,9 +393,9 @@ export const TasksListPage: React.FC = () => {
               variant="default"
               size="default"
               onClick={() => setIsCreateTaskOpen(true)}
-              className="h-10 px-4 gap-2 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white font-bold shadow-sm"
+              className="flex-1 sm:flex-initial h-10 px-4 gap-2 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white font-bold shadow-sm rounded-xl"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 shrink-0" />
               <span>Nouvelle Tâche</span>
             </Button>
           )}
@@ -403,66 +403,66 @@ export const TasksListPage: React.FC = () => {
       </div>
 
       {/* Main Tabs Navigation */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-wassal-border">
+      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1.5 border-b border-wassal-border -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-none">
         <button
           type="button"
           onClick={() => handleTabChange('ALL')}
-          className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
+          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 ${
             currentTab === 'ALL'
               ? 'border-wassal-plum text-wassal-plum bg-wassal-plum/5'
               : 'border-transparent text-wassal-slate hover:text-wassal-plum'
           }`}
         >
-          <ListTodo className="w-4 h-4" />
+          <ListTodo className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
           <span>Toutes ({counts.all})</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('MY_TASKS')}
-          className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
+          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 ${
             currentTab === 'MY_TASKS'
               ? 'border-wassal-plum text-wassal-plum bg-wassal-plum/5'
               : 'border-transparent text-wassal-slate hover:text-wassal-plum'
           }`}
         >
-          <UserCheck className="w-4 h-4" />
+          <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
           <span>Mes affectations ({counts.myTasks})</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('PENDING')}
-          className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
+          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 ${
             currentTab === 'PENDING'
               ? 'border-amber-600 text-amber-700 bg-amber-50/50'
               : 'border-transparent text-wassal-slate hover:text-amber-700'
           }`}
         >
-          <Clock className="w-4 h-4" />
+          <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
           <span>À valider ({counts.pending})</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('DONE')}
-          className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
+          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 ${
             currentTab === 'DONE'
               ? 'border-wassal-green-ink text-wassal-green-ink bg-wassal-green/5'
               : 'border-transparent text-wassal-slate hover:text-wassal-green-ink'
           }`}
         >
-          <CheckCircle2 className="w-4 h-4" />
+          <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
           <span>Achevées ({counts.done})</span>
         </button>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-wassal-border space-y-3 shadow-xs">
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-wassal-border space-y-3 shadow-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 sm:gap-3">
           {/* Search bar */}
-          <div className="relative sm:col-span-6">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-wassal-slate">
+          <div className="relative sm:col-span-2 lg:col-span-6">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-wassal-slate pointer-events-none">
               {isDebouncing || isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin text-wassal-green-ink" />
               ) : (
@@ -475,13 +475,13 @@ export const TasksListPage: React.FC = () => {
               onChange={(e) => handleSearchChange(e.target.value)}
               onKeyDown={handleSearchKeyDown}
               placeholder="Rechercher par intitulé, description..."
-              className="w-full pl-9 pr-9 py-2 text-xs sm:text-sm rounded-xl border border-wassal-border bg-wassal-bg/30 focus:outline-none focus:ring-2 focus:ring-wassal-green focus:bg-white transition-all"
+              className="w-full pl-9 pr-9 h-10 text-xs sm:text-sm rounded-xl border border-wassal-border bg-wassal-bg/30 focus:outline-none focus:ring-2 focus:ring-wassal-green focus:bg-white transition-all"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-wassal-slate hover:text-wassal-plum p-0.5 rounded-full transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-wassal-slate hover:text-wassal-plum p-1 rounded-full transition-colors"
                 title="Effacer la recherche"
               >
                 <X className="w-4 h-4" />
@@ -490,12 +490,12 @@ export const TasksListPage: React.FC = () => {
           </div>
 
           {/* Type Filter */}
-          <div className="sm:col-span-3">
+          <div className="lg:col-span-3">
             <Select
               value={typeFilter}
               onValueChange={(val) => handleTypeChange(val as 'ALL' | TaskType)}
             >
-              <SelectTrigger className="w-full h-10 px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green">
+              <SelectTrigger className="w-full h-10 px-3 text-xs sm:text-sm rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green">
                 <SelectValue placeholder="Tous types de tâche" />
               </SelectTrigger>
               <SelectContent>
@@ -507,14 +507,14 @@ export const TasksListPage: React.FC = () => {
           </div>
 
           {/* Project Filter */}
-          <div className="sm:col-span-3">
+          <div className="lg:col-span-3">
             <Select
               value={String(selectedProjectId)}
               onValueChange={(val) =>
                 handleProjectChange(val === 'ALL' ? 'ALL' : Number(val))
               }
             >
-              <SelectTrigger className="w-full h-10 px-3 text-xs rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green">
+              <SelectTrigger className="w-full h-10 px-3 text-xs sm:text-sm rounded-xl border border-wassal-border bg-white text-wassal-plum font-medium focus:ring-2 focus:ring-wassal-green">
                 <SelectValue placeholder="Tous les projets" />
               </SelectTrigger>
               <SelectContent>
@@ -532,7 +532,7 @@ export const TasksListPage: React.FC = () => {
 
       {/* Tasks Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
@@ -548,9 +548,9 @@ export const TasksListPage: React.FC = () => {
           ))}
         </div>
       ) : tasks.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-wassal-border p-12 text-center max-w-md mx-auto my-8">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-wassal-bg flex items-center justify-center text-wassal-slate mb-3">
-            <ListTodo className="w-7 h-7" />
+        <div className="bg-white rounded-2xl border border-dashed border-wassal-border p-8 sm:p-12 text-center max-w-md mx-auto my-6 sm:my-8">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-2xl bg-wassal-bg flex items-center justify-center text-wassal-slate mb-3">
+            <ListTodo className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
           <h3 className="text-base font-bold text-wassal-plum">Aucune tâche trouvée</h3>
           <p className="text-xs text-wassal-slate mt-1 max-w-xs mx-auto">
@@ -565,7 +565,7 @@ export const TasksListPage: React.FC = () => {
               variant="default"
               size="sm"
               onClick={() => setIsCreateTaskOpen(true)}
-              className="mt-4 gap-2 bg-wassal-green-ink text-white"
+              className="mt-4 gap-2 bg-wassal-green-ink text-white rounded-xl h-10 px-4"
             >
               <Plus className="w-4 h-4" />
               <span>Créer la première tâche</span>
@@ -573,7 +573,7 @@ export const TasksListPage: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
           {tasks.map((task) => (
             <TaskCard
               key={task.id}
