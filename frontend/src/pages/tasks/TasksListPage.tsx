@@ -403,61 +403,59 @@ export const TasksListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Tabs Navigation (Pill Chips - Contained Touch Scroll) */}
-      <div className="w-full max-w-full min-w-0 overflow-x-auto pb-1 scrollbar-none select-none touch-pan-x">
-        <div className="inline-flex items-center gap-1.5 sm:gap-2 min-w-max px-0.5">
-          <button
-            type="button"
-            onClick={() => handleTabChange('ALL')}
-            className={`px-3 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
-              currentTab === 'ALL'
-                ? 'bg-wassal-plum text-white shadow-xs'
-                : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-bg'
-            }`}
-          >
-            <ListTodo className="w-3.5 h-3.5 shrink-0" />
-            <span>Toutes ({counts.all})</span>
-          </button>
+      {/* 4 Task Filter Buttons (No slider / Fully visible grid) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full min-w-0">
+        <button
+          type="button"
+          onClick={() => handleTabChange('ALL')}
+          className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-semibold rounded-xl transition-all shadow-2xs border ${
+            currentTab === 'ALL'
+              ? 'bg-wassal-plum text-white border-wassal-plum shadow-xs'
+              : 'bg-white text-wassal-slate border-wassal-border hover:bg-wassal-bg hover:text-wassal-plum'
+          }`}
+        >
+          <ListTodo className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Toutes ({counts.all})</span>
+        </button>
 
-          <button
-            type="button"
-            onClick={() => handleTabChange('MY_TASKS')}
-            className={`px-3 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
-              currentTab === 'MY_TASKS'
-                ? 'bg-wassal-plum text-white shadow-xs'
-                : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-bg'
-            }`}
-          >
-            <UserCheck className="w-3.5 h-3.5 shrink-0" />
-            <span>Mes missions ({counts.myTasks})</span>
-          </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange('MY_TASKS')}
+          className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-semibold rounded-xl transition-all shadow-2xs border ${
+            currentTab === 'MY_TASKS'
+              ? 'bg-wassal-plum text-white border-wassal-plum shadow-xs'
+              : 'bg-white text-wassal-slate border-wassal-border hover:bg-wassal-bg hover:text-wassal-plum'
+          }`}
+        >
+          <UserCheck className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Mes affectations ({counts.myTasks})</span>
+        </button>
 
-          <button
-            type="button"
-            onClick={() => handleTabChange('PENDING')}
-            className={`px-3 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
-              currentTab === 'PENDING'
-                ? 'bg-amber-600 text-white shadow-xs'
-                : 'bg-white text-wassal-slate border border-wassal-border hover:bg-amber-50'
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5 shrink-0" />
-            <span>À valider ({counts.pending})</span>
-          </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange('PENDING')}
+          className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-semibold rounded-xl transition-all shadow-2xs border ${
+            currentTab === 'PENDING'
+              ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+              : 'bg-white text-wassal-slate border-wassal-border hover:bg-amber-50 hover:text-amber-700'
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">À valider ({counts.pending})</span>
+        </button>
 
-          <button
-            type="button"
-            onClick={() => handleTabChange('DONE')}
-            className={`px-3 py-1.5 sm:py-2 text-xs font-semibold rounded-xl whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 shadow-2xs ${
-              currentTab === 'DONE'
-                ? 'bg-wassal-green-ink text-white shadow-xs'
-                : 'bg-white text-wassal-slate border border-wassal-border hover:bg-wassal-green/10'
-            }`}
-          >
-            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-            <span>Achevées ({counts.done})</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => handleTabChange('DONE')}
+          className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-semibold rounded-xl transition-all shadow-2xs border ${
+            currentTab === 'DONE'
+              ? 'bg-wassal-green-ink text-white border-wassal-green-ink shadow-xs'
+              : 'bg-white text-wassal-slate border-wassal-border hover:bg-wassal-green/10 hover:text-wassal-green-ink'
+          }`}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Achevées ({counts.done})</span>
+        </button>
       </div>
 
       {/* Filter and Search Bar (Compact Mobile-First 2-row layout) */}
