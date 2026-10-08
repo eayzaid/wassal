@@ -48,20 +48,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-wassal-border p-5 hover:shadow-md transition-all flex flex-col justify-between group">
+    <div className="bg-white rounded-2xl border border-wassal-border p-4 sm:p-5 hover:shadow-md transition-all flex flex-col justify-between group w-full min-w-0 max-w-full overflow-hidden">
       <div>
         {/* Top Badges & Edition */}
         <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <ProjectStatusBadge status={project.status} size="sm" />
-            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-wassal-bg text-wassal-slate border border-wassal-border/60">
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-wassal-bg text-wassal-slate border border-wassal-border/60">
               Édition {project.editionNumber}
             </span>
           </div>
 
           {/* Points badge - only visible if isProjectFullDto (BR-T14) */}
           {isFull && (
-            <div className="flex items-center gap-1 text-xs font-bold text-wassal-green-ink bg-wassal-green/15 px-2.5 py-1 rounded-lg">
+            <div className="flex items-center gap-1 text-xs font-bold text-wassal-green-ink bg-wassal-green/15 px-2.5 py-1 rounded-lg shrink-0">
               <Trophy className="w-3.5 h-3.5" />
               <span>
                 {isCompleted
@@ -73,7 +73,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         {/* Project Title & Description */}
-        <div className="mb-4">
+        <div className="mb-3.5">
           <h3
             onClick={() => onViewDetails(project.id)}
             className="text-base sm:text-lg font-bold text-wassal-plum group-hover:text-wassal-green-ink transition-colors cursor-pointer flex items-center gap-2"
@@ -87,12 +87,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         {/* Tasks Progress & End Time */}
-        <div className="space-y-3 py-3 border-y border-wassal-border/60 text-xs">
+        <div className="space-y-2.5 py-3 border-y border-wassal-border/60 text-xs">
           {/* Progress bar */}
           <div>
             <div className="flex items-center justify-between text-[11px] font-medium text-wassal-slate mb-1">
               <span className="flex items-center gap-1.5">
-                <ListTodo className="w-3.5 h-3.5 text-wassal-slate" />
+                <ListTodo className="w-3.5 h-3.5 text-wassal-slate shrink-0" />
                 <span>
                   {doneTasks} / {totalTasks} tâche{totalTasks > 1 ? 's' : ''} réalisée{doneTasks > 1 ? 's' : ''}
                 </span>
@@ -113,32 +113,33 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             </div>
           </div>
 
-          {/* Creator */}
-          {(project.ownerName || project.createdBy) && (
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-wassal-slate flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-wassal-slate" />
-                <span>Créé par :</span>
+          {/* Creator & End Date */}
+          <div className="space-y-1.5 text-[11px]">
+            {(project.ownerName || project.createdBy) && (
+              <div className="flex items-center justify-between gap-1.5 min-w-0">
+                <span className="text-wassal-slate flex items-center gap-1 shrink-0">
+                  <User className="w-3.5 h-3.5 text-wassal-slate shrink-0" />
+                  <span>Créé par :</span>
+                </span>
+                <span className="font-semibold text-wassal-plum truncate text-right">
+                  {project.ownerName || project.createdBy}
+                </span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-1.5 min-w-0">
+              <span className="text-wassal-slate flex items-center gap-1 shrink-0">
+                <Calendar className="w-3.5 h-3.5 shrink-0" />
+                <span>Échéance cible :</span>
               </span>
-              <span className="font-semibold text-wassal-plum truncate max-w-[160px]">
-                {project.ownerName || project.createdBy}
+              <span
+                className={`font-semibold shrink-0 text-right ${
+                  isOverdue ? 'text-rose-600 font-bold' : 'text-wassal-plum'
+                }`}
+              >
+                {formattedEndDate} {isOverdue && '(Dépassée)'}
               </span>
             </div>
-          )}
-
-          {/* End Date */}
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="text-wassal-slate flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Échéance cible :</span>
-            </span>
-            <span
-              className={`font-semibold ${
-                isOverdue ? 'text-rose-600 font-bold' : 'text-wassal-plum'
-              }`}
-            >
-              {formattedEndDate} {isOverdue && '(Dépassée)'}
-            </span>
           </div>
         </div>
       </div>

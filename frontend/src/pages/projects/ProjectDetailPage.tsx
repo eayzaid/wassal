@@ -300,7 +300,7 @@ export const ProjectDetailPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-4 sm:space-y-6 w-full min-w-0 max-w-full pb-12">
       {/* Back Button */}
       <div>
         <button
@@ -314,7 +314,7 @@ export const ProjectDetailPage: React.FC = () => {
       </div>
 
       {/* Hero Card */}
-      <div className="bg-white rounded-3xl border border-wassal-border p-6 sm:p-8 shadow-sm">
+      <div className="bg-white rounded-3xl border border-wassal-border p-4 sm:p-6 lg:p-8 shadow-sm w-full min-w-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3 flex-1">
             <div className="flex items-center gap-2.5 flex-wrap">
@@ -455,14 +455,14 @@ export const ProjectDetailPage: React.FC = () => {
           <p className="text-xs font-medium">Chargement des tâches...</p>
         </div>
       ) : tasks.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-wassal-border p-12 text-center max-w-md mx-auto">
+        <div className="bg-white rounded-2xl border border-dashed border-wassal-border p-8 sm:p-14 text-center w-full my-4 flex flex-col items-center justify-center">
           <div className="w-12 h-12 mx-auto rounded-xl bg-wassal-bg flex items-center justify-center text-wassal-slate mb-3">
             <ListTodo className="w-6 h-6" />
           </div>
-          <h3 className="text-sm font-bold text-wassal-plum">
+          <h3 className="text-sm sm:text-base font-bold text-wassal-plum">
             Aucune tâche pour l'instant
           </h3>
-          <p className="text-xs text-wassal-slate mt-1">
+          <p className="text-xs sm:text-sm text-wassal-slate mt-1 max-w-sm mx-auto">
             Ce projet ne contient encore aucune tâche opérationnelle.
           </p>
           {isOwnerOrAdmin && !isProjectDone && (
@@ -470,7 +470,7 @@ export const ProjectDetailPage: React.FC = () => {
               variant="default"
               size="sm"
               onClick={() => setIsCreateTaskOpen(true)}
-              className="mt-4 gap-2 bg-wassal-green-ink text-white"
+              className="mt-4 gap-2 bg-wassal-green-ink hover:bg-wassal-green-ink/90 text-white rounded-xl font-bold"
             >
               <Plus className="w-4 h-4" />
               <span>Créer une première tâche</span>
@@ -478,8 +478,8 @@ export const ProjectDetailPage: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
+        <div className="space-y-4 w-full min-w-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3.5 sm:gap-5 w-full min-w-0">
             {tasks.map((task) => (
               <TaskCard
                 key={task.id}

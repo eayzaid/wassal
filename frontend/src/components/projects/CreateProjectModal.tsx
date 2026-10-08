@@ -87,7 +87,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
         <DialogHeader>
           <div className="flex items-center gap-2.5 text-wassal-plum">
             <div className="w-9 h-9 rounded-xl bg-wassal-green/20 flex items-center justify-center shrink-0 text-wassal-green-ink">

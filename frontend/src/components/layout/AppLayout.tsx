@@ -16,7 +16,7 @@ export const AppLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 lg:pl-64 flex flex-col min-w-0 w-full max-w-full">
         <Header onToggleSidebar={() => setSidebarOpen(true)} />
-        <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8 flex flex-col min-w-0">
+        <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl 2xl:max-w-[1600px] w-full mx-auto pb-24 lg:pb-8 flex flex-col min-w-0">
           <Suspense fallback={<PageLoadingFallback />}>
             <Outlet />
           </Suspense>
