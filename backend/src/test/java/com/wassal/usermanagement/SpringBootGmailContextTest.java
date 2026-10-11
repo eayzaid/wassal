@@ -36,14 +36,14 @@ class SpringBootGmailContextTest {
         assertThat(javaMailSender).isNotNull();
 
         User testUser = User.builder()
-                .firstName("Ayman")
-                .lastName("Zaidane")
-                .email("aymanzaidanestuff@gmail.com")
+                .firstName("Test")
+                .lastName("User")
+                .email("test-user@wassal.org")
                 .build();
 
         assertThatCode(() -> emailService.sendPasswordResetCodeEmail(testUser, "948271"))
                 .doesNotThrowAnyException();
 
-        System.out.println("SPRING BOOT EMAIL SERVICE SENT RESET CODE EMAIL SUCCESSFULLY TO aymanzaidanestuff@gmail.com!");
+        System.out.println("SPRING BOOT EMAIL SERVICE SENT RESET CODE EMAIL SUCCESSFULLY TO test-user@wassal.org!");
     }
 }

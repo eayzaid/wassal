@@ -325,7 +325,7 @@ Key parameters configurable via environment variables in `backend/src/main/resou
 | `MAIL_PORT` | `587` | SMTP port (STARTTLS) |
 | `MAIL_USERNAME` | — | SMTP username / sender account |
 | `MAIL_PASSWORD` | — | SMTP app password |
-| `MAIL_MOCK_MODE` | `false` | When `true`, logs emails to console instead of sending |
+| `MAIL_MOCK_MODE` | `true` | When `true`, logs emails to console instead of sending |
 | `SEED_MOCK_DATA` | `true` | Automatically provisions mock users on clean DB |
 
 ---
